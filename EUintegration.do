@@ -3,7 +3,7 @@
 *---------- GROUP n ----------*
 * nome cognome - student id
 * nome cognome - student id
-* nome cognome - student id
+* Jovana Mrdalj - 3280610
 * Emanuela Narduzzi - 3173310
 *******************************
 clear all
@@ -17,8 +17,8 @@ local user = c(username)
 display "`user'"
 
 /* Stores filepath conditionally */
-if ("`user'" == "username") {
-    global filepath ""/Users/username/.../"  //insert here your username and file path
+if ("`user'" == "Jovana") {
+    global filepath `"C:\Users\Jovana\OneDrive - Università Commerciale Luigi Bocconi\Desktop\Master\Y1S2\European Integration\Take Home\data"'
 }
 
 if ("`user'" == "user") {
@@ -27,6 +27,11 @@ if ("`user'" == "user") {
 
 // Set directory
 cd "$filepath"
+
+* Defines paths and folders 
+global data "$filepath"
+global output "$filepath\output"
+global temp "$filepath\output\temp"
 
 *--------------------------------------*
 *------------Question 1.a--------------*
