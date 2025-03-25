@@ -69,6 +69,11 @@ putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
 *------------Question 2.a--------------*
 use "$filepath/EEI_TH_2025.dta", clear
 
+*drop neg values
+foreach var in real_sales real_M real_K L real_VA TO {
+        drop if  `var'<=0
+        }
+
 *create logarithms of continuous variables (on deflated values)
 foreach var in real_sales real_M real_K L real_VA {
         gen ln_`var'=ln(`var')
