@@ -65,5 +65,130 @@ putdocx table table2017 = data(sector id_n K sales L real_VA real_K real_sales),
 * Save the final document
 putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
 
+*--------------------------------------*
+*------------Question 2.a--------------*
+use "$filepath/EEI_TH_2025.dta", clear
+
+*create logarithms of continuous variables (on deflated values)
+foreach var in real_sales real_M real_K L real_VA {
+        gen ln_`var'=ln(`var')
+		}
+	
+net install st0060, from("http://www.stata-journal.com/software/sj4-2/")
+ssc install outreg2
+net install prodest, from("http://fmwww.bc.edu/RePEc/bocode/p")
+
+
+*** Consider now all the three countries. Estimate for the two industries available in NACE Rev. 2 2-digit format the production function coefficients, by using standard OLS, the Wooldridge (WRDG) and the Levinsohn & Petrin (LP) procedure. How do you treat the fact that data come from different countries in different years in the productivity estimation?
+
+*OLS REGRESSION - VALUE ADDED
+
+xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==13
+
+
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_OLS_13 = table[1,1]
+scalar list ln_L_OLS_13
+scalar ln_K_OLS_13 = table[1,2]
+scalar list ln_K_OLS_13
+return list
+display e(N)
+
+
+xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==29
+
+
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_OLS_29 = table[1,1]
+scalar list ln_L_OLS_29
+scalar ln_K_OLS_29 = table[1,2]
+scalar list ln_K_OLS_29
+return list
+display e(N)
+
+
+* LEVINSOHN-PETRIN - VALUE ADDED 
+count if missing(ln_real_M)
+tabulate sector if missing(ln_real_M)
+
+xi: levpet ln_real_VA if sector==13, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_LP_13 = table[1,1]
+scalar list ln_L_LP_13
+scalar ln_K_LP_13 = table[1,21]
+scalar list ln_K_LP_13
+return list
+display e(N)
+
+*PERCHè IL NUMERO DELLE OSSERVAZIONI è DIVERSO? ??
+
+*est store LP_13
+*matrix b_LP_13 = e(b)
+*local ln_L_LP_13 = b_LP_13[1, "ln_L"]
+*local ln_real_K_LP_13 = b_LP_13[1, "ln_real_K"]
+
+xi: levpet ln_real_VA if sector==29, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_LP_29 = table[1,1]
+scalar list ln_L_LP_29
+scalar ln_K_LP_29 = table[1,21]
+scalar list ln_K_LP_29
+return list
+display e(N)
+
+
+
+* Wooldridge (WRDG) - VALUE ADDED
+
+capture drop year_dummy*
+capture drop country_dummy*
+tab year, gen(year_dummy)
+tab country_num, gen(country_dummy)
+prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+*this is the right method but how do we account for differences in year and countries, is this the right method?
+
+
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_WRDG_13 = table[1,1]
+scalar list ln_L_WRDG_13
+scalar ln_K_WRDG_13 = table[1,2]
+scalar list ln_K_WRDG_13
+return list
+display e(N)
+
+
+prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded
+matrix table = r(table)
+matrix list table
+
+scalar ln_L_WRDG_29 = table[1,1]
+scalar list ln_L_WRDG_29
+scalar ln_K_WRDG_29 = table[1,2]
+scalar list ln_K_WRDG_29
+return list
+display e(N)
+
+*what bias does he refer to?
+gen bias_13=ln_L_OLS_13- ln_L_LP_13
+gen bias_29=ln_L_OLS_29- ln_L_LP_29
+
+display bias_13
+
+display bias_29
+
+
+
 
 
