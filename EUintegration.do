@@ -66,6 +66,9 @@ putdocx table table2017 = data(sector id_n K sales L real_VA real_K real_sales),
 putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
 
 *--------------------------------------*
+*----------------------------------------------------------------*
+**************************---QUESTION 2---************************
+*----------------------------------------------------------------*
 *------------Question 2.a--------------*
 use "$filepath/EEI_TH_2025.dta", clear
 
@@ -194,5 +197,28 @@ display bias_13
 
 display bias_29
 
+/*The Cobb-Douglas production function is the basis for the analysis, expressed as:
+Y=AL^βK^α
+Taking the logarithm leads to a linear specification:
+ln⁡Y=ln⁡A+βln⁡L+αln⁡K+ε
+where L represents labor, K represents capital, A is total factor productivity (TFP), and ε captures unobserved productivity shocks.
 
+OLS provides baseline estimates but assumes input choices are exogenous, meaning they are not influenced by productivity shocks. This assumption is problematic, as firms typically adjust labor and capital in response to expected productivity changes. As a result, OLS estimates tend to overstate the role of labor and capital in production due to simultaneity bias.
+LP addresses simultaneity by using intermediate inputs as proxies for unobserved productivity shocks. This method assumes that firms adjust their intermediate input use based on their productivity expectations, allowing for a correction in the estimation of labor and capital elasticities. However, LP does not account for firm-specific time-invariant characteristics, which may still influence productivity.
+WRDG applies firm-level fixed effects within a Generalized Method of Moments (GMM) framework. This approach not only addresses simultaneity but also controls for unobserved heterogeneity across firms. Unlike LP, which relies on proxy variables, WRDG explicitly models productivity as correlated with past input choices, making it a more comprehensive method for addressing endogeneity.
 
+The coefficients for labor and capital are positive and statistically significant at all conventional levels across all estimation methods.
+The labor elasticity estimates represent the percentage change in value-added output resulting from a 1% increase in labor input, holding capital constant. Using Ordinary Least Squares (OLS), labor elasticity is estimated at 0.806 for NACE-13, meaning that a 1% increase in labor leads to a 0.806% increase in output. For NACE-29, the OLS estimate is 0.911, indicating a 0.911% increase in output per 1% increase in labor.
+he estimation results show that the OLS method consistently yields the highest labor elasticity estimates. In contrast, Levinsohn & Petrin (LP) and Wooldridge (WRDG) methods produce lower labor elasticity values, with the Levinsohn & Petrin (LP) method estimating labor elasticity at 0.639 for NACE-13 and 0.647 for NACE-29, suggesting a 1% increase in labor raises output by only 0.639% and 0.647%, respectively. The Wooldridge (WRDG) method yields slightly higher labor elasticity estimates than LP, at 0.661 for NACE-13 and 0.682 for NACE-29, still below OLS values.
+A similar trend is observed for capital elasticity. OLS estimates capital elasticity at 0.163 for NACE-13 and 0.125 for NACE-29, implying that a 1% increase in capital leads to a 0.163% and 0.125% increase in output, respectively. The LP and WRDG methods, which control for simultaneity, yield lower estimates: LP estimates 0.072 for NACE-13 and 0.078 for NACE-29, while WRDG produces estimates of 0.062 and 0.071, respectively.*/
+
+*Given the presence of data from multiple countries and years, it is necessary to control for potential heterogeneity in productivity estimation. Year and country fixed effects are included in the analysis to account for macroeconomic differences and institutional variations. Additionally, WRDG incorporates firm-level fixed effects, ensuring that persistent differences between firms do not bias the results.
+*The results indicate that OLS consistently produces higher labor elasticity estimates compared to LP and WRDG.The reason for this bias is that labor and capital inputs are not truly exogenous. Firms adjust these inputs based on productivity expectations, making them correlated with the error term in OLS estimations. LP corrects for this by incorporating intermediate inputs as proxies, while WRDG further refines the estimation by eliminating firm-specific effects that could distort productivity measurements.
+*----------------------------------------------------------------*
+**************************---QUESTION 3---************************
+*----------------------------------------------------------------*
+
+/*The choice between using revenues or value-added in estimating the production function affects the interpretation of productivity coefficients. Estimating productivity using revenues introduces additional biases because revenues incorporate not only production efficiency but also firm-specific pricing strategies. As a result, firms with higher markups appear more productive, even if their actual efficiency remains unchanged.
+Value-added, which is computed as revenues minus intermediate inputs, provides a more accurate measure of firm output. By excluding intermediate input costs, it isolates the contributions of labor and capital to production, avoiding distortions caused by price markups.
+From a theoretical perspective, the Cobb-Douglas production function assumes constant returns to scale, implying that the sum of labor and capital elasticities should equal one. When revenues are used instead of value-added, the sum of these elasticities often exceeds one, suggesting increasing returns to scale that may not actually exist. This occurs because intermediate inputs, which are part of revenues but not explicitly accounted for in the model, create an overstatement of input contributions.
+Empirically, revenue-based estimations tend to yield higher labor and capital coefficients than value-added estimations. OLS applied to revenue overstates factor elasticities due to simultaneity bias and markup distortions. While LP and WRDG attempt to correct for these biases, revenue-based estimates still reflect differences in pricing power rather than pure productivity.*/
