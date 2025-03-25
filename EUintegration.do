@@ -133,8 +133,6 @@ scalar list ln_K_LP_13
 return list
 display e(N)
 
-*PERCHè IL NUMERO DELLE OSSERVAZIONI è DIVERSO? ??
-
 xi: levpet ln_real_VA if sector==29, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 
 matrix table = r(table)
@@ -151,11 +149,17 @@ drop _Icountry*  _Iyear*
 
 * Wooldridge (WRDG) - VALUE ADDED
 
+capture confirm variable country_num
+if _rc != 0 {
+    encode country, gen(country_num)
+}
 capture drop year_dummy*
 capture drop country_dummy*
 tab year, gen(year_dummy)
 tab country_num, gen(country_dummy)
+
 prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+
 *this is the right method but how do we account for differences in year and countries, is this the right method?
 
 matrix table = r(table)
@@ -169,6 +173,7 @@ return list
 display e(N)
 
 xi: prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded
+
 matrix table = r(table)
 matrix list table
 
@@ -179,15 +184,15 @@ scalar list ln_K_WRDG_29
 return list
 display e(N)
 
-*what bias does he refer to?
+capture drop year_dummy*
+capture drop country_dummy*
+
 gen bias_13=ln_L_OLS_13- ln_L_LP_13
 gen bias_29=ln_L_OLS_29- ln_L_LP_29
 
 display bias_13
 
 display bias_29
-
-
 
 
 
