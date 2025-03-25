@@ -70,7 +70,7 @@ putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
 use "$filepath/EEI_TH_2025.dta", clear
 
 *drop neg values
-foreach var in real_sales real_M real_K L real_VA TO {
+foreach var in real_sales real_M real_K L{
         drop if  `var'<=0
         }
 
