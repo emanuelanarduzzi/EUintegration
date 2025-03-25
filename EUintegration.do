@@ -134,11 +134,6 @@ display e(N)
 
 *PERCHè IL NUMERO DELLE OSSERVAZIONI è DIVERSO? ??
 
-*est store LP_13
-*matrix b_LP_13 = e(b)
-*local ln_L_LP_13 = b_LP_13[1, "ln_L"]
-*local ln_real_K_LP_13 = b_LP_13[1, "ln_real_K"]
-
 xi: levpet ln_real_VA if sector==29, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 
 matrix table = r(table)
@@ -162,7 +157,6 @@ tab country_num, gen(country_dummy)
 prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
 *this is the right method but how do we account for differences in year and countries, is this the right method?
 
-
 matrix table = r(table)
 matrix list table
 
@@ -172,7 +166,6 @@ scalar ln_K_WRDG_13 = table[1,2]
 scalar list ln_K_WRDG_13
 return list
 display e(N)
-
 
 prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded
 matrix table = r(table)
