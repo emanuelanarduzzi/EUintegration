@@ -115,6 +115,7 @@ scalar list ln_K_OLS_29
 return list
 display e(N)
 
+drop _Icountry*  _Iyear*
 
 * LEVINSOHN-PETRIN - VALUE ADDED 
 count if missing(ln_real_M)
@@ -146,7 +147,7 @@ scalar list ln_K_LP_29
 return list
 display e(N)
 
-
+drop _Icountry*  _Iyear*
 
 * Wooldridge (WRDG) - VALUE ADDED
 
