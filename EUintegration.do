@@ -118,7 +118,6 @@ scalar list ln_K_OLS_29
 return list
 display e(N)
 
-drop _Icountry*  _Iyear*
 
 * LEVINSOHN-PETRIN - VALUE ADDED 
 count if missing(ln_real_M)
@@ -161,7 +160,7 @@ capture drop country_dummy*
 tab year, gen(year_dummy)
 tab country_num, gen(country_dummy)
 
-prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+xi= prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
 
 *this is the right method but how do we account for differences in year and countries, is this the right method?
 
@@ -187,8 +186,6 @@ scalar list ln_K_WRDG_29
 return list
 display e(N)
 
-capture drop year_dummy*
-capture drop country_dummy*
 
 gen bias_13=ln_L_OLS_13- ln_L_LP_13
 gen bias_29=ln_L_OLS_29- ln_L_LP_29
