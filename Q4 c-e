@@ -79,8 +79,11 @@ twoway (kdensity TFP_WRDG_13 if country=="France" & year==2006, lcolor(blue)) (k
 *Spain  - 2006 vs 2015 - WRDG - log
 twoway (kdensity TFP_WRDG_13 if country=="Spain" & year==2006, lcolor(blue)) (kdensity TFP_WRDG_13 if country=="Spain" & year==2015, lcolor(red)), legend(label(1 "2006") label(2 "2015")) title("Kernel Density of TFP for Spain") subtitle("Wooldridge") xtitle("TFP_WRDG_13") ytitle("Density")
 
-/* c)
-The shifts in the TFP distribution from 2006 to 2015 are not homogeneous throughout the distribution, as evidenced by the changes in both the peak and the right tail of the distribution in the kernel density plots for Spain. The decrease in density around the peak and the increase in density in the right tail indicate that the changes in productivity are more pronounced among the higher-productivity firms, suggesting heterogeneous growth across the distribution.*/
+/* c, d)
+The shifts in the TFP distribution from 2006 to 2015 are not homogeneous throughout the distribution, as evidenced by the changes in both the peak and the right tail of the distribution in the kernel density plots for Spain. The decrease in density around the peak and the increase in density in the right tail indicate that the changes in productivity are more pronounced among the higher-productivity firms, suggesting heterogeneous growth across the distribution. For France, instead, the distribution is quite similar for both years with all three different methods.
+The increased skewness to the right in Spain, even with the OLS model, suggests that Spain experienced a significant divergence in firm productivity between 2006 and 2015, with some firms seeing much higher TFP growth than others. This reflects the broader changes in the economy and industrial structure, where technological improvements, better management practices, or structural reforms may have led to more productivity dispersion.
+In contrast, the more stable distribution in France suggests that its industry, at least within the scope of this analysis, experienced less pronounced changes in productivity across firms, resulting in smaller shifts in skewness.*/
+
 
 
 
