@@ -84,6 +84,27 @@ The shifts in the TFP distribution from 2006 to 2015 are not homogeneous through
 The increased skewness to the right in Spain, even with the OLS model, suggests that Spain experienced a significant divergence in firm productivity between 2006 and 2015, with some firms seeing much higher TFP growth than others. This reflects the broader changes in the economy and industrial structure, where technological improvements, better management practices, or structural reforms may have led to more productivity dispersion.
 In contrast, the more stable distribution in France suggests that its industry, at least within the scope of this analysis, experienced less pronounced changes in productivity across firms, resulting in smaller shifts in skewness.*/
 
+**********ESTIMATE PARETO SHAPE OF THE PRODUCTIVITY DISTRIBUTION
+
+sort sector year
+by sector year: cumul TFP_LP, generate(cum_TFP_LP)
+gen rhs_LP=log(1- cum_TFP_LP)
+
+*regress rhs on ln_TFP in order to retrieve the coefficient of ln(tfp), i.e. the "K" of the Pareto
+reg rhs_LP ln_TFP_LP if sector==13
+
+*** first we pool all the years together and evaluate the general shape of the distribution
+*then we compare the k-value for initial and final year to check the evolution of the distribution
+
+foreach s in 13 29{
+qui reg rhs_LP ln_TFP_LP if sector==`s'
+outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s'")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2006
+outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2015
+outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015")
+}
+
 
 
 
