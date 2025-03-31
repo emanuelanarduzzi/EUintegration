@@ -19,7 +19,7 @@ if ("`user'" == "Jovana") {
 }
 
 if ("`user'" == "user") {
-    global filepath "\Users\user\Desktop\STATA\eu" //emanuela's file path
+    global filepath "/Users/user/Desktop/STATA/eu" //emanuela's file path
 }
 
 // Set directory
