@@ -156,7 +156,7 @@ estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("
 *------------Question 2.b--------------*
 
 * Create Excel file and define path
-local excel_file "$filepath\Production_Function_Table.xlsx"
+local excel_file "$output\Production_Function_Table.xlsx"
 putexcel set "`excel_file'", replace
 
 * Write headers with formatting and lines
@@ -292,7 +292,7 @@ estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("
 *------------Question 2.b--------------*
 
 * Create Excel file and define path
-local excel_file "$filepath\Production_Function_Table2.xlsx"
+local excel_file "$output\Production_Function_Table2.xlsx"
 putexcel set "`excel_file'", replace
 
 * Write headers with formatting and lines
@@ -423,7 +423,7 @@ estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("
 *------------Question 2.b--------------*
 
 * Create Excel file and define path
-local excel_file "$filepath\Production_Function_Table3.xlsx"
+local excel_file "$output\Production_Function_Table3.xlsx"
 putexcel set "`excel_file'", replace
 
 * Write headers with formatting and lines
