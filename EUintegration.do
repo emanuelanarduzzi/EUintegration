@@ -19,7 +19,7 @@ if ("`user'" == "Jovana") {
 }
 
 if ("`user'" == "user") {
-    global filepath "/Users/user/Desktop/STATA/eu/" //emanuela's file path
+    global filepath "\Users\user\Desktop\STATA\eu" //emanuela's file path
 }
 
 // Set directory
@@ -69,8 +69,15 @@ putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
 *----------------------------------------------------------------*
 **************************---QUESTION 2---************************
 *----------------------------------------------------------------*
+
+*net install st0060, from("http://www.stata-journal.com/software/sj4-2/")
+*ssc install outreg2
+*net install prodest, from("http://fmwww.bc.edu/RePEc/bocode/p")
+
 *------------Question 2.a--------------*
-use "$filepath/EEI_TH_2025.dta", clear
+
+use "$filepath\EEI_TH_2025.dta", clear
+keep if inlist(sector, 13, 29)
 
 *drop neg values
 foreach var in real_sales real_M real_K L{
@@ -81,136 +88,418 @@ foreach var in real_sales real_M real_K L{
 foreach var in real_sales real_M real_K L real_VA {
         gen ln_`var'=ln(`var')
 		}
+		
+capture confirm variable country_num
+if _rc != 0 {
+    encode country, gen(country_num)
+}
 	
-net install st0060, from("http://www.stata-journal.com/software/sj4-2/")
-ssc install outreg2
-net install prodest, from("http://fmwww.bc.edu/RePEc/bocode/p")
+*net install st0060, from("http:\\www.stata-journal.com\software\sj4-2\")
+*ssc install outreg2
+*net install prodest, from("http:\\fmwww.bc.edu\RePEc\bocode\p")
 
 
 *** Consider now all the three countries. Estimate for the two industries available in NACE Rev. 2 2-digit format the production function coefficients, by using standard OLS, the Wooldridge (WRDG) and the Levinsohn & Petrin (LP) procedure. How do you treat the fact that data come from different countries in different years in the productivity estimation?
 
 *OLS REGRESSION - VALUE ADDED
-
-xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==13
-
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_OLS_13 = table[1,1]
-scalar list ln_L_OLS_13
-scalar ln_K_OLS_13 = table[1,2]
-scalar list ln_K_OLS_13
-return list
-display e(N)
+xtset id_n year
 
 
-xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==29
+matrix results = J(6, 4, .)
+matrix colnames results = "Sector" "L_coef" "K_coef" "M_coef"
+local row = 1
 
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_OLS_29 = table[1,1]
-scalar list ln_L_OLS_29
-scalar ln_K_OLS_29 = table[1,2]
-scalar list ln_K_OLS_29
-return list
-display e(N)
-
-
-* LEVINSOHN-PETRIN - VALUE ADDED 
-count if missing(ln_real_M)
-tabulate sector if missing(ln_real_M)
-
-xi: levpet ln_real_VA if sector==13, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_LP_13 = table[1,1]
-scalar list ln_L_LP_13
-scalar ln_K_LP_13 = table[1,21]
-scalar list ln_K_LP_13
-return list
-display e(N)
-
-xi: levpet ln_real_VA if sector==29, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_LP_29 = table[1,1]
-scalar list ln_L_LP_29
-scalar ln_K_LP_29 = table[1,21]
-scalar list ln_K_LP_29
-return list
-display e(N)
-
-drop _Icountry*  _Iyear*
-
-* Wooldridge (WRDG) - VALUE ADDED
-
-capture confirm variable country_num
-if _rc != 0 {
-    encode country, gen(country_num)
+foreach s in 13 29 {
+    preserve
+    keep if sector == `s'
+    
+    reg ln_real_VA ln_L ln_real_K ln_real_M i.year i.country_num    *cobbdouglas with materials
+	
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = _b[ln_real_M]
+    local row = `row' + 1
+    
+    estimates store OLS_`s'
+    
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) level(99) reps(50) va *no controls for years and countries
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store WRDG_`s'
+    
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) method(lp) acf id(id_n) t(year) level(99) reps(50) va   *no controls for years and countries
+	
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store LP_`s'
+    
+    restore
 }
-capture drop year_dummy*
-capture drop country_dummy*
-tab year, gen(year_dummy)
-tab country_num, gen(country_dummy)
 
-xi= prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+matrix list results
 
-*this is the right method but how do we account for differences in year and countries, is this the right method?
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_WRDG_13 = table[1,1]
-scalar list ln_L_WRDG_13
-scalar ln_K_WRDG_13 = table[1,2]
-scalar list ln_K_WRDG_13
-return list
-display e(N)
-
-xi: prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded
-
-matrix table = r(table)
-matrix list table
-
-scalar ln_L_WRDG_29 = table[1,1]
-scalar list ln_L_WRDG_29
-scalar ln_K_WRDG_29 = table[1,2]
-scalar list ln_K_WRDG_29
-return list
-display e(N)
+estout OLS_13 WRDG_13 LP_13, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 13 Results")
+estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 29 Results")
 
 
-gen bias_13=ln_L_OLS_13- ln_L_LP_13
-gen bias_29=ln_L_OLS_29- ln_L_LP_29
+*------------Question 2.b--------------*
 
-display bias_13
+* Create Excel file and define path
+local excel_file "$filepath\Production_Function_Table.xlsx"
+putexcel set "`excel_file'", replace
 
-display bias_29
+* Write headers with formatting and lines
+putexcel A1 = "" B1 = "Nace-13" C1 = "Nace-29", bold hcenter
+putexcel A1:C1, border(bottom, thick)
 
-/*The Cobb-Douglas production function is the basis for the analysis, expressed as:
-Y=AL^βK^α
-Taking the logarithm leads to a linear specification:
-ln⁡Y=ln⁡A+βln⁡L+αln⁡K+ε
-where L represents labor, K represents capital, A is total factor productivity (TFP), and ε captures unobserved productivity shocks.
+* Labels with section lines
+putexcel A2 = "Lev-Pet", bold
+putexcel A3 = "ln(labor)"
+putexcel A4 = "ln(capital)"
+putexcel A4:C4, border(bottom)
 
-OLS provides baseline estimates but assumes input choices are exogenous, meaning they are not influenced by productivity shocks. This assumption is problematic, as firms typically adjust labor and capital in response to expected productivity changes. As a result, OLS estimates tend to overstate the role of labor and capital in production due to simultaneity bias.
-LP addresses simultaneity by using intermediate inputs as proxies for unobserved productivity shocks. This method assumes that firms adjust their intermediate input use based on their productivity expectations, allowing for a correction in the estimation of labor and capital elasticities. However, LP does not account for firm-specific time-invariant characteristics, which may still influence productivity.
-WRDG applies firm-level fixed effects within a Generalized Method of Moments (GMM) framework. This approach not only addresses simultaneity but also controls for unobserved heterogeneity across firms. Unlike LP, which relies on proxy variables, WRDG explicitly models productivity as correlated with past input choices, making it a more comprehensive method for addressing endogeneity.
+putexcel A5 = "WRDG", bold
+putexcel A6 = "ln(labor)"
+putexcel A7 = "ln(capital)"
+putexcel A7:C7, border(bottom)
 
-The coefficients for labor and capital are positive and statistically significant at all conventional levels across all estimation methods.
-The labor elasticity estimates represent the percentage change in value-added output resulting from a 1% increase in labor input, holding capital constant. Using Ordinary Least Squares (OLS), labor elasticity is estimated at 0.806 for NACE-13, meaning that a 1% increase in labor leads to a 0.806% increase in output. For NACE-29, the OLS estimate is 0.911, indicating a 0.911% increase in output per 1% increase in labor.
-he estimation results show that the OLS method consistently yields the highest labor elasticity estimates. In contrast, Levinsohn & Petrin (LP) and Wooldridge (WRDG) methods produce lower labor elasticity values, with the Levinsohn & Petrin (LP) method estimating labor elasticity at 0.639 for NACE-13 and 0.647 for NACE-29, suggesting a 1% increase in labor raises output by only 0.639% and 0.647%, respectively. The Wooldridge (WRDG) method yields slightly higher labor elasticity estimates than LP, at 0.661 for NACE-13 and 0.682 for NACE-29, still below OLS values.
-A similar trend is observed for capital elasticity. OLS estimates capital elasticity at 0.163 for NACE-13 and 0.125 for NACE-29, implying that a 1% increase in capital leads to a 0.163% and 0.125% increase in output, respectively. The LP and WRDG methods, which control for simultaneity, yield lower estimates: LP estimates 0.072 for NACE-13 and 0.078 for NACE-29, while WRDG produces estimates of 0.062 and 0.071, respectively.*/
+putexcel A8 = "OLS", bold
+putexcel A9 = "ln(labor)"
+putexcel A10 = "ln(capital)"
+putexcel A10:C10, border(bottom)
 
-*Given the presence of data from multiple countries and years, it is necessary to control for potential heterogeneity in productivity estimation. Year and country fixed effects are included in the analysis to account for macroeconomic differences and institutional variations. Additionally, WRDG incorporates firm-level fixed effects, ensuring that persistent differences between firms do not bias the results.
-*The results indicate that OLS consistently produces higher labor elasticity estimates compared to LP and WRDG.The reason for this bias is that labor and capital inputs are not truly exogenous. Firms adjust these inputs based on productivity expectations, making them correlated with the error term in OLS estimations. LP corrects for this by incorporating intermediate inputs as proxies, while WRDG further refines the estimation by eliminating firm-specific effects that could distort productivity measurements.
+putexcel A11 = "Bias in labour coefficient", bold
+putexcel A12 = "N. of observations", bold
+putexcel A12:C12, border(bottom)
+
+* Based on your matrix creation code:
+* Rows 1-3 for sector 13: OLS (row 1), WRDG (row 2), LP (row 3)
+* Rows 4-6 for sector 29: OLS (row 4), WRDG (row 5), LP (row 6)
+
+* Lev-Pet (LP) - rows 3 and 6
+putexcel B3 = matrix(results[3,2]), nformat(number_d2)
+putexcel B4 = matrix(results[3,3]), nformat(number_d2)
+putexcel C3 = matrix(results[6,2]), nformat(number_d2)
+putexcel C4 = matrix(results[6,3]), nformat(number_d2)
+
+* WRDG - rows 2 and 5
+putexcel B6 = matrix(results[2,2]), nformat(number_d2)
+putexcel B7 = matrix(results[2,3]), nformat(number_d2)
+putexcel C6 = matrix(results[5,2]), nformat(number_d2)
+putexcel C7 = matrix(results[5,3]), nformat(number_d2)
+
+* OLS - rows 1 and 4
+putexcel B9 = matrix(results[1,2]), nformat(number_d2)
+putexcel B10 = matrix(results[1,3]), nformat(number_d2)
+putexcel C9 = matrix(results[4,2]), nformat(number_d2)
+putexcel C10 = matrix(results[4,3]), nformat(number_d2)
+
+* Bias in labour coefficient (OLS - LP)
+putexcel B11 = formula(B9-B3), nformat(number_d2)
+putexcel C11 = formula(C9-C3), nformat(number_d2)
+
+* Number of observations for sector 13
+preserve
+keep if sector == 13
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs13 = e(N)
+putexcel B12 = `obs13'
+restore
+
+* Number of observations for sector 29
+preserve
+keep if sector == 29
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs29 = e(N)
+putexcel C12 = `obs29'
+restore
+
+* Add title below table
+putexcel A13 = "Table 1: Comparison of Production Function Coefficients for NACE-13 and NACE-29", bold
+
+
+*****************************************
+
+*alternative adding controls in lp and wrdg
+
+xtset id_n year
+
+
+matrix results = J(6, 4, .)
+matrix colnames results = "Sector" "L_coef" "K_coef" "M_coef"
+local row = 1
+
+foreach s in 13 29 {
+    preserve
+    keep if sector == `s'
+    
+    reg ln_real_VA ln_L ln_real_K ln_real_M i.year i.country_num
+	
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = _b[ln_real_M]
+    local row = `row' + 1
+    
+    estimates store OLS_`s'
+    
+	capture drop year_dummy*
+    capture drop country_dummy*
+    tab year, gen(year_dummy)
+    tab country_num, gen(country_dummy)
+	prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store WRDG_`s'
+    
+	prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(lp) acf id(id_n) t(year) valueadded 
+	*levpet ln_real_VA, free(ln_L i.country_num i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store LP_`s'
+    
+    restore
+}
+
+matrix list results
+
+estout OLS_13 WRDG_13 LP_13, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 13 Results")
+estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 29 Results")
+
+
+*------------Question 2.b--------------*
+
+* Create Excel file and define path
+local excel_file "$filepath\Production_Function_Table2.xlsx"
+putexcel set "`excel_file'", replace
+
+* Write headers with formatting and lines
+putexcel A1 = "" B1 = "Nace-13" C1 = "Nace-29", bold hcenter
+putexcel A1:C1, border(bottom, thick)
+
+* Labels with section lines
+putexcel A2 = "Lev-Pet", bold
+putexcel A3 = "ln(labor)"
+putexcel A4 = "ln(capital)"
+putexcel A4:C4, border(bottom)
+
+putexcel A5 = "WRDG", bold
+putexcel A6 = "ln(labor)"
+putexcel A7 = "ln(capital)"
+putexcel A7:C7, border(bottom)
+
+putexcel A8 = "OLS", bold
+putexcel A9 = "ln(labor)"
+putexcel A10 = "ln(capital)"
+putexcel A10:C10, border(bottom)
+
+putexcel A11 = "Bias in labour coefficient", bold
+putexcel A12 = "N. of observations", bold
+putexcel A12:C12, border(bottom)
+
+* Based on your matrix creation code:
+* Rows 1-3 for sector 13: OLS (row 1), WRDG (row 2), LP (row 3)
+* Rows 4-6 for sector 29: OLS (row 4), WRDG (row 5), LP (row 6)
+
+* Lev-Pet (LP) - rows 3 and 6
+putexcel B3 = matrix(results[3,2]), nformat(number_d2)
+putexcel B4 = matrix(results[3,3]), nformat(number_d2)
+putexcel C3 = matrix(results[6,2]), nformat(number_d2)
+putexcel C4 = matrix(results[6,3]), nformat(number_d2)
+
+* WRDG - rows 2 and 5
+putexcel B6 = matrix(results[2,2]), nformat(number_d2)
+putexcel B7 = matrix(results[2,3]), nformat(number_d2)
+putexcel C6 = matrix(results[5,2]), nformat(number_d2)
+putexcel C7 = matrix(results[5,3]), nformat(number_d2)
+
+* OLS - rows 1 and 4
+putexcel B9 = matrix(results[1,2]), nformat(number_d2)
+putexcel B10 = matrix(results[1,3]), nformat(number_d2)
+putexcel C9 = matrix(results[4,2]), nformat(number_d2)
+putexcel C10 = matrix(results[4,3]), nformat(number_d2)
+
+* Bias in labour coefficient (OLS - LP)
+putexcel B11 = formula(B9-B3), nformat(number_d2)
+putexcel C11 = formula(C9-C3), nformat(number_d2)
+
+* Number of observations for sector 13
+preserve
+keep if sector == 13
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs13 = e(N)
+putexcel B12 = `obs13'
+restore
+
+* Number of observations for sector 29
+preserve
+keep if sector == 29
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs29 = e(N)
+putexcel C12 = `obs29'
+restore
+
+* Add title below table
+putexcel A13 = "Table 1: Comparison of Production Function Coefficients for NACE-13 and NACE-29", bold
+
+**************************************************
+
+*alternative with a cobbdouglas without materials and levpet as the do file of the professor
+
+*OLS REGRESSION - VALUE ADDED
+xtset id_n year
+
+
+matrix results = J(6, 4, .)
+matrix colnames results = "Sector" "L_coef" "K_coef" "M_coef"
+local row = 1
+
+foreach s in 13 29 {
+    preserve
+    keep if sector == `s'
+    
+	
+    reg ln_real_VA ln_L ln_real_K i.year i.country_num 
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store OLS_`s'
+    
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M)  method(wrdg) id(id_n) t(year) valueadded 
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store WRDG_`s'
+    
+    levpet ln_real_VA, free(ln_L) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+    
+    matrix results[`row', 1] = `s'
+    matrix results[`row', 2] = _b[ln_L]
+    matrix results[`row', 3] = _b[ln_real_K]
+    matrix results[`row', 4] = 0
+    local row = `row' + 1
+    
+    estimates store LP_`s'
+    
+    restore
+}
+
+matrix list results
+
+estout OLS_13 WRDG_13 LP_13, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 13 Results")
+estout OLS_29 WRDG_29 LP_29, cells(b(fmt(3)) se(par fmt(3))) stats(N r2) title("Sector 29 Results")
+
+
+*------------Question 2.b--------------*
+
+* Create Excel file and define path
+local excel_file "$filepath\Production_Function_Table3.xlsx"
+putexcel set "`excel_file'", replace
+
+* Write headers with formatting and lines
+putexcel A1 = "" B1 = "Nace-13" C1 = "Nace-29", bold hcenter
+putexcel A1:C1, border(bottom, thick)
+
+* Labels with section lines
+putexcel A2 = "Lev-Pet", bold
+putexcel A3 = "ln(labor)"
+putexcel A4 = "ln(capital)"
+putexcel A4:C4, border(bottom)
+
+putexcel A5 = "WRDG", bold
+putexcel A6 = "ln(labor)"
+putexcel A7 = "ln(capital)"
+putexcel A7:C7, border(bottom)
+
+putexcel A8 = "OLS", bold
+putexcel A9 = "ln(labor)"
+putexcel A10 = "ln(capital)"
+putexcel A10:C10, border(bottom)
+
+putexcel A11 = "Bias in labour coefficient", bold
+putexcel A12 = "N. of observations", bold
+putexcel A12:C12, border(bottom)
+
+* Based on your matrix creation code:
+* Rows 1-3 for sector 13: OLS (row 1), WRDG (row 2), LP (row 3)
+* Rows 4-6 for sector 29: OLS (row 4), WRDG (row 5), LP (row 6)
+
+* Lev-Pet (LP) - rows 3 and 6
+putexcel B3 = matrix(results[3,2]), nformat(number_d2)
+putexcel B4 = matrix(results[3,3]), nformat(number_d2)
+putexcel C3 = matrix(results[6,2]), nformat(number_d2)
+putexcel C4 = matrix(results[6,3]), nformat(number_d2)
+
+* WRDG - rows 2 and 5
+putexcel B6 = matrix(results[2,2]), nformat(number_d2)
+putexcel B7 = matrix(results[2,3]), nformat(number_d2)
+putexcel C6 = matrix(results[5,2]), nformat(number_d2)
+putexcel C7 = matrix(results[5,3]), nformat(number_d2)
+
+* OLS - rows 1 and 4
+putexcel B9 = matrix(results[1,2]), nformat(number_d2)
+putexcel B10 = matrix(results[1,3]), nformat(number_d2)
+putexcel C9 = matrix(results[4,2]), nformat(number_d2)
+putexcel C10 = matrix(results[4,3]), nformat(number_d2)
+
+* Bias in labour coefficient (OLS - LP)
+putexcel B11 = formula(B9-B3), nformat(number_d2)
+putexcel C11 = formula(C9-C3), nformat(number_d2)
+
+* Number of observations for sector 13
+preserve
+keep if sector == 13
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs13 = e(N)
+putexcel B12 = `obs13'
+restore
+
+* Number of observations for sector 29
+preserve
+keep if sector == 29
+reg ln_real_VA ln_L ln_real_K i.year i.country_num
+local obs29 = e(N)
+putexcel C12 = `obs29'
+restore
+
+* Add title below table
+putexcel A13 = "Table 1: Comparison of Production Function Coefficients for NACE-13 and NACE-29", bold
+
+
+
+
+
+/*comment*/
 *----------------------------------------------------------------*
 **************************---QUESTION 3---************************
 *----------------------------------------------------------------*
