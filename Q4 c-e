@@ -5,7 +5,7 @@ gen ln_L=ln(L)
 gen ln_real_VA=ln(real_VA)
 gen ln_real_M=ln(real_M)
 
-* generate TFP estimates with OLS for France, Spain in sector 13
+* generate TFP estimates with OLS for France, Spain in sector 13 & 29
 
 xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==13 & inlist(country,"France","Spain")
 predict ln_TFP_OLS_13, residuals
@@ -16,7 +16,16 @@ kdensity TFP_OLS_13
 sum ln_TFP_OLS_13, d
 replace ln_TFP_OLS_13=. if !inrange(ln_TFP_OLS_13,r(p1),r(p99))
 
-* generate TFP estimates with Levinsohn-Petrin (ACF correction) for France, Spain in sector 13
+xi: reg ln_real_VA ln_L ln_real_K i.country i.year if sector==29 & inlist(country,"France","Spain")
+predict ln_TFP_OLS_29, residuals
+gen TFP_OLS_29= exp(ln_TFP_OLS_29)
+sum TFP_OLS_29, d
+replace TFP_OLS_29=. if !inrange(TFP_OLS_29,r(p1),r(p99))
+kdensity TFP_OLS_29
+sum ln_TFP_OLS_29, d
+replace ln_TFP_OLS_29=. if !inrange(ln_TFP_OLS_29,r(p1),r(p99))
+
+* generate TFP estimates with Levinsohn-Petrin (ACF correction) for France, Spain in sector 13 & 29
 
 xi: prodest ln_real_VA if sector==13 & inlist(country,"France","Spain"), met(lp) free(ln_L i.year) proxy(ln_real_M) state(ln_real_K) va acf
 predict ln_TFP_LP_ACF_13, residuals
@@ -26,7 +35,8 @@ gen TFP_LP_ACF_13= exp(ln_TFP_LP_ACF_13)
 sum ln_TFP_LP_ACF_13, d
 replace ln_TFP_LP_ACF_13=. if !inrange(ln_TFP_LP_ACF_13,r(p1),r(p99))
 
-* generate TFP estimates with Wooldridge for France, Spain in sector 13
+
+* generate TFP estimates with Wooldridge for France, Spain in sector 13 & 29
 
 xi: prodest ln_real_VA if sector==13 & inlist(country,"France","Spain"), met(wrdg) free(ln_L) proxy(ln_real_M) state(ln_real_K) va
 predict ln_TFP_WRDG_13, resid
@@ -35,6 +45,14 @@ replace ln_TFP_WRDG_13=. if !inrange(ln_TFP_WRDG_13,r(p1),r(p99))
 gen TFP_WRDG_13= exp(ln_TFP_WRDG_13)
 sum TFP_WRDG_13, d
 replace TFP_WRDG_13=. if !inrange(TFP_WRDG_13,r(p1),r(p99))
+
+xi: prodest ln_real_VA if sector==29 & inlist(country,"France","Spain"), met(wrdg) free(ln_L) proxy(ln_real_M) state(ln_real_K) va
+predict ln_TFP_WRDG_29, resid
+sum ln_TFP_WRDG_29, d
+replace ln_TFP_WRDG_29=. if !inrange(ln_TFP_WRDG_29,r(p1),r(p99))
+gen TFP_WRDG_29= exp(ln_TFP_WRDG_29)
+sum TFP_WRDG_29, d
+replace TFP_WRDG_29=. if !inrange(TFP_WRDG_29,r(p1),r(p99))
 
 * create a new sample
 save "cleaned_sample.dta", replace
@@ -96,14 +114,13 @@ reg rhs_LP ln_TFP_LP if sector==13
 *** first we pool all the years together and evaluate the general shape of the distribution
 *then we compare the k-value for initial and final year to check the evolution of the distribution
 
-foreach s in 13 29{
-qui reg rhs_LP ln_TFP_LP if sector==`s'
-outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s'")
+foreach s in 13 29 {
 qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2006
 outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006")
 qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2015
 outreg2 using Pareto.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015")
 }
+
 
 
 
