@@ -255,11 +255,12 @@ foreach s in 13 29 {
     
     estimates store OLS_`s'
     
-	capture drop year_dummy*
+    capture drop year_dummy*
     capture drop country_dummy*
     tab year, gen(year_dummy)
     tab country_num, gen(country_dummy)
-	prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
     
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -270,7 +271,6 @@ foreach s in 13 29 {
     estimates store WRDG_`s'
     
 	prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(lp) acf id(id_n) t(year) valueadded 
-	*levpet ln_real_VA, free(ln_L i.country_num i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
     
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -366,7 +366,7 @@ putexcel A13 = "Table 1: Comparison of Production Function Coefficients for NACE
 
 **************************************************
 
-*alternative with a cobbdouglas without materials and levpet as the do file of the professor
+*alternative with a cobbdouglas without materials and levpet (with controls) as the do file of the professor
 
 *OLS REGRESSION - VALUE ADDED
 xtset id_n year
@@ -391,7 +391,7 @@ foreach s in 13 29 {
     
     estimates store OLS_`s'
     
-    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M)  method(wrdg) id(id_n) t(year) valueadded 
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
     
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -401,7 +401,7 @@ foreach s in 13 29 {
     
     estimates store WRDG_`s'
     
-    levpet ln_real_VA, free(ln_L) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+    levpet ln_real_VA, free(ln_L year_dummy* country_dummy*) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
     
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
