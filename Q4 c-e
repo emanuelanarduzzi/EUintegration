@@ -104,6 +104,20 @@ In contrast, the more stable distribution in France suggests that its industry, 
 
 **********ESTIMATE PARETO SHAPE OF THE PRODUCTIVITY DISTRIBUTION
 
+drop TFP_LP
+drop ln_TFP_LP
+foreach s in 13 29 {
+xi: levpet ln_real_VA if sector==`s' & inlist(country,"France","Spain"), free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(20) level(99)
+predict TFP_LP_`s', omega
+sum TFP_LP_`s', d
+replace TFP_LP_`s'=. if !inrange(TFP_LP_`s', r(p1),r(p99))
+}
+
+gen TFP_LP = .
+replace TFP_LP=TFP_LP_13 if sector==13
+replace TFP_LP=TFP_LP_29 if sector==29
+gen ln_TFP_LP=ln(TFP_LP)
+
 sort sector year
 by sector year: cumul TFP_LP, generate(cum_TFP_LP)
 gen rhs_LP=log(1- cum_TFP_LP)
