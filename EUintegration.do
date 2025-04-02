@@ -123,7 +123,7 @@ foreach s in 13 29 {
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
     matrix results[`row', 3] = _b[ln_real_K]
-    matrix results[`row', 4] = _b[ln_real_M]
+    matrix results[`row', 4] = 0
     local row = `row' + 1
     
     estimates store OLS_`s'
@@ -185,9 +185,10 @@ putexcel A9 = "ln(labor)"
 putexcel A10 = "ln(capital)"
 putexcel A10:C10, border(bottom)
 
-putexcel A11 = "Bias in labour coefficient", bold
-putexcel A12 = "N. of observations", bold
-putexcel A12:C12, border(bottom)
+putexcel A11 = "Bias in labour coefficient-lp", bold
+putexcel A12 = "Bias in labour coefficient-wrdg", bold
+putexcel A13 = "N. of observations", bold
+putexcel A13:C13, border(bottom)
 
 * Based on your matrix creation code:
 * Rows 1-3 for sector 13: OLS (row 1), WRDG (row 2), LP (row 3)
@@ -214,13 +215,16 @@ putexcel C10 = matrix(results[4,3]), nformat(number_d2)
 * Bias in labour coefficient (OLS - LP)
 putexcel B11 = formula(B9-B3), nformat(number_d2)
 putexcel C11 = formula(C9-C3), nformat(number_d2)
+putexcel B11 = formula(B9-B6), nformat(number_d2)
+putexcel C11 = formula(C9-C6), nformat(number_d2)
+
 
 * Number of observations for sector 13
 preserve
 keep if sector == 13
 reg ln_real_VA ln_L ln_real_K i.year i.country_num
 local obs13 = e(N)
-putexcel B12 = `obs13'
+putexcel B13 = `obs13'
 restore
 
 * Number of observations for sector 29
@@ -228,11 +232,11 @@ preserve
 keep if sector == 29
 reg ln_real_VA ln_L ln_real_K i.year i.country_num
 local obs29 = e(N)
-putexcel C12 = `obs29'
+putexcel C13 = `obs29'
 restore
 
 * Add title below table
-putexcel A13 = "Table 1: Comparison of Production Function Coefficients for NACE-13 and NACE-29", bold
+putexcel A14 = "Table 1: Comparison of Production Function Coefficients for NACE-13 and NACE-29", bold
 
 
 /*comment*/
