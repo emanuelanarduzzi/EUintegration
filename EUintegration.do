@@ -215,8 +215,8 @@ putexcel C10 = matrix(results[4,3]), nformat(number_d2)
 * Bias in labour coefficient (OLS - LP)
 putexcel B11 = formula(B9-B3), nformat(number_d2)
 putexcel C11 = formula(C9-C3), nformat(number_d2)
-putexcel B11 = formula(B9-B6), nformat(number_d2)
-putexcel C11 = formula(C9-C6), nformat(number_d2)
+putexcel B12 = formula(B9-B6), nformat(number_d2)
+putexcel C12 = formula(C9-C6), nformat(number_d2)
 
 
 * Number of observations for sector 13
