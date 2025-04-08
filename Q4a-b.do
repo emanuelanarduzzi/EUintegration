@@ -87,8 +87,7 @@ gen ln_TFP_WRDG=ln(TFP_WRDG)
 
 drop ln_TFP_WRDG_13 ln_TFP_WRDG_29 TFP_WRDG_13 TFP_WRDG_29
 
-*Drop dummy variables 
-capture drop year_dummy*
+*Drop county dummy
 capture drop country_dummy*
 
 log using "extremev.log", replace
@@ -141,25 +140,22 @@ graph export $output/lnTFP_29.png, replace
 
 *What do you notice? Are there any differences if you rely on the LP or WRDG procedure? Comment.
 
-*-------------------------------------Edited-------------------------------------------
-
-
 *------------Question 4.b--------------*
 
 *************************Estimate TFP with OLS********************************
-*Question: is it correct to exclude the country dummy?
+*Question: is it correct to exclude the country dummy? Should I include a sectoral dummy?
 *Estimating TFP with OLS for Spain
-reg ln_real_VA ln_L ln_real_K i.year if country == "Spain"
+reg ln_real_VA ln_L ln_real_K i.year i.sector if country == "Spain"
 predict ln_TFP_OLS_SP, residuals
 gen TFP_OLS_SP= exp(ln_TFP_OLS_SP)
 
 *Repeating the same procedure for Italy
-reg ln_real_VA ln_L ln_real_K i.year if country == "Italy"
+reg ln_real_VA ln_L ln_real_K i.year i.sector if country == "Italy"
 predict ln_TFP_OLS_IT, residuals 
 gen TFP_OLS_IT = exp(ln_TFP_OLS_IT)
 
 *Repeating the same procedure for France
-reg ln_real_VA ln_L ln_real_K i.year if country == "France"
+reg ln_real_VA ln_L ln_real_K i.year i.sector if country == "France"
 predict ln_TFP_OLS_FR, residuals 
 gen TFP_OLS_FR = exp(ln_TFP_OLS_FR)
 
@@ -173,16 +169,16 @@ gen ln_TFP_OLS_Country=ln(TFP_OLS_Country)
 drop ln_TFP_OLS_SP ln_TFP_OLS_IT ln_TFP_OLS_FR TFP_OLS_SP TFP_OLS_IT TFP_OLS_FR 
 
 *************************Estimate TFP with LP********************************
-
-xi: levpet ln_real_VA if country == "Spain", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+*Should we include the dummies in the free parameters?
+xi: levpet ln_real_VA if country == "Spain", free(ln_L i.year i.sector) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 predict TFP_LP_SP, omega
 gen ln_TFP_LP_SP= ln(TFP_LP_SP)
 
-xi: levpet ln_real_VA if country == "Italy", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+xi: levpet ln_real_VA if country == "Italy", free(ln_L i.year i.sector) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 predict TFP_LP_IT, omega
 gen ln_TFP_LP_IT = ln(TFP_LP_IT)
 
-xi: levpet ln_real_VA if country == "France", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+xi: levpet ln_real_VA if country == "France", free(ln_L i.year i.sector) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 predict TFP_LP_FR, omega
 gen ln_TFP_LP_FR = ln(TFP_LP_FR)
 
@@ -195,16 +191,18 @@ gen ln_TFP_LP_Country=ln(TFP_LP_Country)
 drop ln_TFP_LP_SP ln_TFP_LP_IT ln_TFP_LP_FR TFP_LP_SP TFP_LP_IT TFP_LP_FR
 
 *************************Estimate TFP with WRDG********************************
+tab sector, gen (sector_dummy)
+tab year, gen(year_dummy)
 
-xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* sector_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
 predict ln_TFP_WRDG_SP, residuals 
 gen TFP_WRDG_SP= exp(ln_TFP_WRDG_SP)
 
-xi: prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+xi: prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* sector_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
 predict ln_TFP_WRDG_IT, residuals 
 gen TFP_WRDG_IT = exp(ln_TFP_WRDG_IT)
 
-xi: prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+xi: prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* sector_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
 predict ln_TFP_WRDG_FR, residuals 
 gen TFP_WRDG_FR = exp(ln_TFP_WRDG_FR)
 
@@ -217,17 +215,28 @@ gen ln_TFP_WRDG_Country = ln(TFP_WRDG_Country)
 drop ln_TFP_WRDG_SP ln_TFP_WRDG_IT ln_TFP_WRDG_FR TFP_WRDG_SP TFP_WRDG_IT TFP_WRDG_FR
 
 *Drop dummy variables 
-capture drop year_dummy*
-
+capture drop sector_dummy*
 
 *Plot the TFP distribution for each country
-tw kdensity ln_TFP_OLS_SP || kdensity ln_TFP_LP_SP || kdensity ln_TFP_WRDG_SP
-save "$output\TFP_SP_compared", replace
 
-tw kdensity ln_TFP_OLS_IT || kdensity ln_TFP_LP_IT || kdensity ln_TFP_WRDG_IT
-save "$output\TFP_IT_compared", replace
+twoway (kdensity TFP_OLS_Country if country=="Spain", lcolor(green))|| (kdensity TFP_WRDG_Country if country=="Spain", lcolor(sienna)) || (kdensity TFP_LP_Country if country=="Spain", lcolor(blue)), title("TFP Density Spain") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP")) 
+graph export $output/TFP_SP.png, replace
 
-tw kdensity ln_TFP_OLS_FR || kdensity ln_TFP_LP_FR || kdensity ln_TFP_WRDG_FR
-save "$output\TFP_FR_compared", replace
+twoway (kdensity ln_TFP_OLS_Country if country=="Spain", lcolor(green))|| (kdensity ln_TFP_WRDG_Country if country=="Spain", lcolor(sienna)) || (kdensity ln_TFP_LP_Country if country=="Spain", lcolor(blue)), title("Log TFP Density Spain") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP")) 
+graph export $output/lnTFP_SP.png, replace
+
+twoway (kdensity TFP_OLS_Country if country=="Italy",  lcolor(green)) || (kdensity TFP_WRDG_Country if country=="Italy", lcolor(sienna)) || (kdensity TFP_LP_Country   if country=="Italy", lcolor(blue)), title("TFP Density Italy") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
+graph export $output/TFP_IT.png, replace
+
+twoway (kdensity ln_TFP_OLS_Country if country=="Italy",  lcolor(green)) || (kdensity ln_TFP_WRDG_Country if country=="Italy", lcolor(sienna)) || (kdensity ln_TFP_LP_Country   if country=="Italy", lcolor(blue)), title("Log TFP Density Italy") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
+graph export $output/lnTFP_IT.png, replace
+
+*------------------------does not work--------------------
+twoway (kdensity TFP_OLS_Country if country=="France",  lcolor(green))||(kdensity TFP_WRDG_Country if country=="France", lcolor(sienna))||(kdensity TFP_LP_Country if country=="France", lcolor(blue)), title("TFP Density France") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
+graph export $output/TFP_FR.png, replace
+
+twoway (kdensity ln_TFP_OLD_Country if country=="France",  lcolor(green))||(kdensity ln_TFP_WRDG_Country if country=="France", lcolor(sienna))||(kdensity ln_TFP_LP_Country if country=="France", lcolor(blue)), title("Log TFP Density France") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
+graph export $output/lnTFP_FR.png, replace
+
 
 *Are there any differences if you rely on the LP or WRDG procedure? Compare and comment.
