@@ -143,7 +143,6 @@ graph export $output/lnTFP_29.png, replace
 *------------Question 4.b--------------*
 
 *************************Estimate TFP with OLS********************************
-*Question: is it correct to exclude the country dummy? Should I include a sectoral dummy?
 *Estimating TFP with OLS for Spain
 reg ln_real_VA ln_L ln_real_K i.year i.sector if country == "Spain"
 predict ln_TFP_OLS_SP, residuals
@@ -163,7 +162,7 @@ gen TFP_OLS_FR = exp(ln_TFP_OLS_FR)
 gen TFP_OLS_Country = .
 replace TFP_OLS_Country = TFP_OLS_SP if country=="Spain"
 replace TFP_OLS_Country = TFP_OLS_IT if country=="Italy"
-replace TFP_OLS_Country = TFP_OLS_FR if country=="Italy"
+replace TFP_OLS_Country = TFP_OLS_FR if country=="France"
 gen ln_TFP_OLS_Country=ln(TFP_OLS_Country)
 
 drop ln_TFP_OLS_SP ln_TFP_OLS_IT ln_TFP_OLS_FR TFP_OLS_SP TFP_OLS_IT TFP_OLS_FR 
@@ -185,13 +184,14 @@ gen ln_TFP_LP_FR = ln(TFP_LP_FR)
 gen TFP_LP_Country = .
 replace TFP_LP_Country = TFP_LP_SP if country=="Spain"
 replace TFP_LP_Country = TFP_LP_IT if country=="Italy"
-replace TFP_LP_Country = TFP_LP_FR if country=="Italy"
+replace TFP_LP_Country = TFP_LP_FR if country=="France"
 gen ln_TFP_LP_Country=ln(TFP_LP_Country)
 
 drop ln_TFP_LP_SP ln_TFP_LP_IT ln_TFP_LP_FR TFP_LP_SP TFP_LP_IT TFP_LP_FR
 
 *************************Estimate TFP with WRDG********************************
 tab sector, gen (sector_dummy)
+capture drop year_dummy*
 tab year, gen(year_dummy)
 
 xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* sector_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
@@ -231,12 +231,10 @@ graph export $output/TFP_IT.png, replace
 twoway (kdensity ln_TFP_OLS_Country if country=="Italy",  lcolor(green)) || (kdensity ln_TFP_WRDG_Country if country=="Italy", lcolor(sienna)) || (kdensity ln_TFP_LP_Country   if country=="Italy", lcolor(blue)), title("Log TFP Density Italy") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
 graph export $output/lnTFP_IT.png, replace
 
-*------------------------does not work--------------------
 twoway (kdensity TFP_OLS_Country if country=="France",  lcolor(green))||(kdensity TFP_WRDG_Country if country=="France", lcolor(sienna))||(kdensity TFP_LP_Country if country=="France", lcolor(blue)), title("TFP Density France") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
 graph export $output/TFP_FR.png, replace
 
-twoway (kdensity ln_TFP_OLD_Country if country=="France",  lcolor(green))||(kdensity ln_TFP_WRDG_Country if country=="France", lcolor(sienna))||(kdensity ln_TFP_LP_Country if country=="France", lcolor(blue)), title("Log TFP Density France") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
+twoway (kdensity ln_TFP_OLS_Country if country=="France",  lcolor(green)) || (kdensity ln_TFP_WRDG_Country if country=="France", lcolor(sienna)) || (kdensity ln_TFP_LP_Country   if country=="France", lcolor(blue)), title("Log TFP Density France") legend(label(1 "OLS") label(2 "WRDG") label(3 "LP"))
 graph export $output/lnTFP_FR.png, replace
-
 
 *Are there any differences if you rely on the LP or WRDG procedure? Compare and comment.
