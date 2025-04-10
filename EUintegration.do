@@ -22,6 +22,10 @@ if ("`user'" == "user") {
     global filepath "/Users/user/Desktop/STATA/eu" //emanuela's file path
 }
 
+*if ("`user'" == "user") {
+    *global filepath "C:\Users\user\Desktop\EEU" //Claudia
+*}
+
 // Set directory
 cd "$filepath"
 
