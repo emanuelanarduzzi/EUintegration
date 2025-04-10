@@ -19,9 +19,12 @@ if ("`user'" == "Jovana") {
 }
 
 if ("`user'" == "user") {
-    global filepath "/Users/user/Desktop/STATA/eu" //emanuela's file path
+    global filepath "/Users/user/Desktop/STATA/eu/" //emanuela's file path
 }
 
+*if ("`user'" == "user") {
+    *global filepath "C:\Users\user\Desktop\EEU" //Claudia
+*}
 // Set directory
 cd "$filepath"
 
@@ -29,7 +32,6 @@ cd "$filepath"
 global data "$filepath"
 global output "$filepath\output"
 global temp "$filepath\output\temp"
-
 
 *----------------------------------------------------------------*
 **************************---QUESTION 1---************************
