@@ -133,7 +133,7 @@ foreach s in 13 29 {
     estimates store OLS_`s'
 
     *WOOLRIDGE REGRESSION
-    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
 
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
