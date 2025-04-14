@@ -93,14 +93,10 @@ foreach var in real_sales real_M real_K L real_VA {
         gen ln_`var'=ln(`var')
 		}
 		
-capture confirm variable country_num
-if _rc != 0 {
-    encode country, gen(country_num)
-}
 capture drop year_dummy*
 capture drop country_dummy*
 tab year, gen(year_dummy)
-tab country_num, gen(country_dummy)
+tab country, gen(country_dummy)
 	
 *net install st0060, from("http:\\www.stata-journal.com\software\sj4-2\")
 *ssc install outreg2
@@ -122,7 +118,7 @@ foreach s in 13 29 {
     keep if sector == `s'
 
    *OLS REGRESSION
-    reg ln_real_VA ln_L ln_real_K i.year i.country_num    
+    xi:reg ln_real_VA ln_L ln_real_K i.year i.country
     
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -133,7 +129,7 @@ foreach s in 13 29 {
     estimates store OLS_`s'
 
     *WOOLRIDGE REGRESSION
-    prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+    xi:prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
 
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -144,7 +140,7 @@ foreach s in 13 29 {
     estimates store WRDG_`s'
 
     *LP REGRESSION
-    levpet ln_real_VA, free(ln_L year_dummy* country_dummy*) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+    xi:levpet ln_real_VA, free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 	
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
