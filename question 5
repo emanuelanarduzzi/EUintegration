@@ -1,0 +1,143 @@
+
+*----------------------------------------------------------------*
+**************************---QUESTION 5---************************
+*----------------------------------------------------------------*
+
+*ssc install spmap
+*ssc install shp2dta
+
+*------------Question 5.a--------------*
+
+* Load Employment Data (Panel from 1988–2007)
+
+use "$data/Employment_Shares_Take_Home.dta", clear
+
+* Compute employment shares (pre-sample, time-invariant)
+gen share_rk = empl / tot_empl_nuts2
+gen share_ck = 1/tot_empl_country_nace 
+
+* Keep only variables needed
+keep country year nace nuts2 share_rk share_ck
+save "employment_clean.dta", replace
+use "employment_clean.dta", clear
+duplicates report country year nace
+
+
+*Load Imports from China (EU)
+
+use "$data/Imports_China_Take_Home.dta", clear
+rename real_imports_china imp_china
+
+save "china_import_clean.dta", replace
+use "china_import_clean.dta", clear
+duplicates report country year nace
+
+
+*Load Imports from China to US
+
+use "$data/Imports_US_China_Take_Home.dta", clear
+rename real_USimports_china us_imp_china
+gen country = "USA"  // to align structure with EU countries
+
+save "us_import_clean.dta", replace
+use "us_import_clean.dta", clear
+duplicates report country year nace
+
+* Merge All 3 Datasets by country-year-nace
+
+use  "employment_clean.dta", clear
+merge m:1 country year nace using "china_import_clean.dta"
+drop if _merge != 3
+drop _merge
+
+merge m:1 year nace using "us_import_clean.dta"
+drop if _merge < 2  // if not matched to US imports, drop
+drop _merge
+
+* At this point: you have a full merged panel by country, year, nace, and region
+
+
+*Compute 5-Year Lagged Averages (t-6 to t-1)
+
+sort country nace year
+
+gen ln_imp_china = log(imp_china)
+gen ln_us_imp_china = log(us_imp_china)
+
+* Compute import growth (5-year log differences)
+
+* Δln(IMP_china) for EU countries
+bysort country nace (year): gen ln_imp_china_t6 = ln_imp_china[_n-6]
+gen d_imp_china = ln_imp_china - ln_imp_china_t6
+
+* Δln(IMP_china) for US (instrument)
+bysort nace (year): gen ln_us_imp_china_t6 = ln_us_imp_china[_n-6]
+gen d_us_imp_china = ln_us_imp_china - ln_us_imp_china_t6
+
+
+* Compute China shock and US IV at observation level
+
+* Multiply both employment shares by import growth
+gen china_shock_elem = share_rk * d_imp_china * share_ck
+gen us_iv_elem      = share_rk * d_us_imp_china * share_ck
+
+* Aggregate to region-year level (∑ over industries)
+
+collapse (sum) china_shock_elem us_iv_elem, by(country nuts2 year)
+rename china_shock_elem china_shock
+rename us_iv_elem iv_china_shock
+save "china_shock_panel.dta", replace
+
+list country nuts2 year china_shock iv_china_shock if year >= 1994, sepby(country) noobs
+
+*------------Question 5.b--------------*
+
+use  "china_shock_panel.dta", clear
+* Collapse by region: average China shock and IV over the period
+collapse (mean) china_shock iv_china_shock, by(country nuts2)
+
+* Optional: rename to make clear these are averages
+rename china_shock avg_china_shock
+rename iv_china_shock avg_iv_china_shock
+save "china_shock_crosssection.dta", replace
+
+* Inspect results
+list country nuts2 avg_china_shock avg_iv_china_shock, sepby(country) noobs
+
+*------------Question 5.c--------------*
+shp2dta using "/Users/user/Desktop/STATA/eu/NUTS_RG_01M_2013_4326/NUTS_RG_01M_2013_4326.shp", ///
+    database("nuts2_db.dta") coordinates("nuts2_coords.dta") ///
+    genid(id) replace
+
+use "china_shock_crosssection.dta", clear
+rename nuts2 NUTS_ID // Match shapefile region code
+save "china_shock_mapped.dta", replace
+
+use "nuts2_db.dta", clear
+merge 1:1 NUTS_ID using "china_shock_mapped.dta"
+spmap avg_china_shock using "nuts2_coords.dta", id(id) ///
+    fcolor(Blues) clmethod(quantile) ///
+    title("Average China Shock by Region") legend(on)
+
+use "Employment_Shares_Take_Home.dta", clear
+
+* Use a reference pre-sample year (values are constant)
+keep if year == 1988
+
+* Flag manufacturing sectors (NACE rev.1.1: DA–DN)
+*gen is_manuf = inlist(nace, "DA", "DB", "DC", "DD", "DE", "DF", ///
+ *                           "DG", "DH", "DI", "DJ", "DK", "DL", "DM", "DN")
+
+* Collapse to region level
+collapse (sum) empl tot_empl_nuts2, by(country nuts2)
+
+gen manuf_share = empl / tot_empl_nuts2
+
+rename nuts2 NUTS_ID  // to match shapefile
+save "manuf_share_mapped.dta", replace
+
+use "nuts2_db.dta", clear
+merge 1:1 NUTS_ID using "manuf_share_mapped.dta"
+spmap manuf_share using "nuts2_coords.dta", id(id) ///
+    fcolor(Greens) clmethod(quantile) ///
+    title("Manufacturing Share by Region") legend(on)
