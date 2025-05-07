@@ -7,14 +7,11 @@
 
 *------------Question 5.a--------------*
 
-ssc install shp2dta, replace
-ssc install spmap, replace
-
 /* (a) Merge the first three datasets together. Compute the China shock for each region, in each year for which it is possible, according to the equation above. Use a lag of 5 years to compute the import deltas (i.e., growth in imports between t-6 and t-1). Repeat the same procedure with US imports, i.e., substituting ∆IM P Chinackt with ∆IM P ChinaU SAkt, following the identification strategy by Colantone and Stanig (AJPS, 2018). */
 
 	*—— i. Load pre-sample employment shares (first year only) ———————————————*
 use "$data/Employment_Shares_Take_Home.dta", clear
-
+tab  nace 
 keep country year nuts2 nace empl tot_empl_nuts2 tot_empl_country_nace
 gen share_rk    = empl / tot_empl_nuts2
 save "$output/weights.dta", replace
@@ -34,6 +31,7 @@ gen imp6  = L6.real_imports_china     // imports at t−6
 gen d_imp_china = imp1 - imp6              // 5-year growth
 gen scaled_d_imp_china = d_imp_china / tot_empl_country_nace
 gen china_shock_elem  = share_rk * scaled_d_imp_china 
+drop if missing(china_shock_elem)
 
 bysort country nuts2 year: egen ChinaShock = total(china_shock_elem)
 keep country nuts2 year ChinaShock
@@ -53,9 +51,9 @@ gen us1    = L.real_USimports_china
 gen us6    = L6.real_USimports_china
 gen d_us_imp = us1 - us6
 
-
 gen scaled_d_us_imp = d_us_imp / tot_empl_country_nace
-gen us_iv_elem   = share_rk *  scaled_d_us_imp
+gen us_iv_elem= share_rk *  scaled_d_us_imp
+drop if missing(us_iv_elem)
 
 bysort country nuts2 year: egen USShock = total(us_iv_elem)
 keep country nuts2 year USShock
@@ -64,6 +62,7 @@ save "$output/USShock_by_region_year.dta", replace
 *------------Question 5.b--------------*
 /* Collapse the dataset by region to obtain the average 5-year China shock over the sample period. This will be the average of all available years' shocks (for reference, see Colantone and Stanig, American Political Science Review, 2018). You should now have a dataset with cross-sectional data. */
 use "ChinaShock_by_region_year.dta", clear
+drop if ChinaShock==0
 collapse (mean) ChinaShock, by(country nuts2 year)
 save "$output/ChinaShock_by_region_year_collapsed.dta", replace
 
@@ -75,7 +74,6 @@ use "$output/ChinaShock_by_region_year_collapsed.dta", clear
 merge 1:1 country nuts2 year using "$output/USShock_by_region_year_collapsed.dta"
 drop if _merge!=3
 drop _merge
-
 
 * Compute each region's average 5-year shock over all years available
 collapse (mean) ChinaShock USShock, by(country nuts2)
@@ -104,11 +102,10 @@ drop _merge
 
 *—— Map average China shock ——————————————————————————————————————*
 spmap ChinaShock using "nuts2_coords.dta", id(id) ///
-    fcolor(Blues) clmethod(quantile) ///
+    fcolor(Blues) clmethod(quantile) clnumber(6) ///
     title("Average China Shock by Region") legend(on)
-	
-graph export "Average_China_Shock_by_Region.png", replace
 
+graph export "Average_China_Shock_by_Region.png", replace
 
 *—— Compute & map pre-sample manufacturing share ——————————————————————*
 * Use a reference pre-sample year (values are constant)
@@ -117,22 +114,31 @@ use "Employment_Shares_Take_Home.dta", clear
 * Use a reference pre-sample year (values are constant)
 keep if year == 1988
 
-* Flag manufacturing sectors (NACE rev.1.1: DA–DN)
-*gen is_manuf = inlist(nace, "DA", "DB", "DC", "DD", "DE", "DF", ///
- *                           "DG", "DH", "DI", "DJ", "DK", "DL", "DM", "DN")
+collapse (sum) empl, by(country nuts2)
 
-* Collapse to region level
-collapse (sum) empl tot_empl_nuts2, by(country nuts2)
+rename empl manuf_empl
+save "manuf_empl.dta", replace
 
-gen manuf_share = empl / tot_empl_nuts2
+use "Employment_Shares_Take_Home.dta", clear
+keep if year == 1988
+keep country nuts2 tot_empl_nuts2
+duplicates drop
+
+merge 1:1 nuts2 using "manuf_empl.dta"
+
+gen manuf_share=manuf_empl/tot_empl_nuts2
+
+drop if _merge!= 3
+drop _merge
 
 rename nuts2 NUTS_ID  // to match shapefile
-save "manuf_share_mapped.dta", replace
+save "manuf_share.dta", replace
 
 use "nuts2_db.dta", clear
-merge 1:1 NUTS_ID using "manuf_share_mapped.dta"
-drop if _merge!=3
+merge 1:1 NUTS_ID using "manuf_share.dta"
+drop if _merge!= 3
 drop _merge
+
 spmap manuf_share using "nuts2_coords.dta", id(id) ///
     fcolor(Greens) clmethod(quantile) ///
     title("Manufacturing Share by Region") legend(on)
