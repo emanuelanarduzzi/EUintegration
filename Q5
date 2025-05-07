@@ -61,7 +61,7 @@ save "$output/USShock_by_region_year.dta", replace
 
 *------------Question 5.b--------------*
 /* Collapse the dataset by region to obtain the average 5-year China shock over the sample period. This will be the average of all available years' shocks (for reference, see Colantone and Stanig, American Political Science Review, 2018). You should now have a dataset with cross-sectional data. */
-use "ChinaShock_by_region_year.dta", clear
+use "$output/ChinaShock_by_region_year.dta", clear
 drop if ChinaShock==0
 collapse (mean) ChinaShock, by(country nuts2 year)
 save "$output/ChinaShock_by_region_year_collapsed.dta", replace
