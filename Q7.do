@@ -159,13 +159,9 @@ eststo ols: reg minority_scorepc avg_china_shock i.gndr c.agea i.edulvlb i.nuts1
 * IV (2SLS)
 eststo iv: ivregress 2sls minority_scorepc i.gndr c.agea i.edulvlb i.nuts1_code (avg_china_shock = avg_iv_china_shock) [pweight=pspwght], vce(cluster region)
 
-* RTF file
-esttab ols iv using summary_results.rtf, replace title(Effect of China Shock on Minority Policy Support) se star(* 0.10 ** 0.05 *** 0.01) b(%9.2f) se(%9.2f) scalars(N) label keep(avg_china_shock) coeflabels(avg_china_shock "China Shock") addnote("Controls for gender, age, education, and NUTS1 region fixed effects included")
-
-*.tex file
-esttab ols iv using summary_results.tex, replace se star(* 0.10 ** 0.05 *** 0.01) b(%9.2f) se(%9.2f) scalars(N) label keep(avg_china_shock) coeflabels(avg_china_shock "China Shock") addnote("Controls for gender, age, education, and NUTS1 region fixed effects included")
+* rtf file
+esttab ols iv using summary_results.rtf, replace se star(* 0.10 ** 0.05 *** 0.01) b(%9.2f) se(%9.2f) scalars(N) label keep(avg_china_shock 2.gndr agea 113.edulvlb 313.edulvlb 520.edulvlb 710.edulvlb 800.edulvlb) coeflabels(avg_china_shock "China Shock" 2.gndr "Female" agea "Age" 113.edulvlb "Primary education (ISCED 1)" 313.edulvlb "Upper secondary (ISCED 3)" 520.edulvlb "Adv. vocational (ISCED 5B)" 710.edulvlb "Master's (ISCED 5A long)" 800.edulvlb "Doctoral degree (ISCED 6)") addnote("Controls for remaining education levels and NUTS1 region fixed effects included.")
 
 * Stata output window
-esttab ols iv, se star(* 0.10 ** 0.05 *** 0.01) keep(avg_china_shock) label
-
+esttab ols iv, se star(* 0.10 ** 0.05 *** 0.01) b(%9.2f) se(%9.2f) label keep(avg_china_shock 2.gndr agea 113.edulvlb 313.edulvlb 520.edulvlb 710.edulvlb 800.edulvlb) coeflabels(avg_china_shock "China Shock" 2.gndr "Female" agea "Age" 113.edulvlb "Primary education (ISCED 1)" 313.edulvlb "Upper secondary (ISCED 3)" 520.edulvlb "Adv. vocational (ISCED 5B)" 710.edulvlb "Master's (ISCED 5A long)" 800.edulvlb "Doctoral degree (ISCED 6)") addnote("Controls for remaining education levels and NUTS1 region fixed effects included.")
 
