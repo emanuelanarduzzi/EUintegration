@@ -26,7 +26,7 @@ drop _merge
 egen panel_id = group(country nace nuts2)
 xtset panel_id year
 
-gen imp1  = L.real_imports_china      // imports at t−1
+gen imp1  = L.real_imports_china      // imports at t−1.  *vanno presi 
 gen imp6  = L6.real_imports_china     // imports at t−6
 gen d_imp_china = imp1 - imp6              // 5-year growth
 gen scaled_d_imp_china = d_imp_china / tot_empl_country_nace
@@ -63,15 +63,15 @@ save "$output/USShock_by_region_year.dta", replace
 *------------Question 5.b--------------*
 /* Collapse the dataset by region to obtain the average 5-year China shock over the sample period. This will be the average of all available years' shocks (for reference, see Colantone and Stanig, American Political Science Review, 2018). You should now have a dataset with cross-sectional data. */
 use "$output/ChinaShock_by_region_year.dta", clear
-collapse (mean) ChinaShock, by(country nuts2 year)
+collapse (mean) ChinaShock, by(country nuts2)
 save "$output/ChinaShock_by_region_year_collapsed.dta", replace
 
 use "$output/USShock_by_region_year.dta", clear
-collapse (mean) USShock, by(country nuts2 year)
+collapse (mean) USShock, by(country nuts2)
 save "$output/USShock_by_region_year_collapsed.dta", replace
 
 use "$output/ChinaShock_by_region_year_collapsed.dta", clear
-merge 1:1 country nuts2 year using "$output/USShock_by_region_year_collapsed.dta"
+merge 1:1 country nuts2 using "$output/USShock_by_region_year_collapsed.dta"
 drop if _merge!=3
 drop _merge
 
@@ -144,3 +144,4 @@ spmap manuf_share using "nuts2_coords.dta", id(id) ///
     title("Manufacturing Share by Region") legend(on)
 	
 graph export "Manufacturing_Share_by_Region.png", replace
+		  
