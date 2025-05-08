@@ -11,10 +11,6 @@ if ("`user'" == "Jovana") {
 }
 
 if ("`user'" == "user") {
-    global filepath "/Users/user/Desktop/STATA/eu/" //emanuela's file path
-}
-
-if ("`user'" == "user") {
     global filepath "C:\Users\user\Desktop\EEU" //Claudia
 }
 // Set directory
@@ -30,190 +26,176 @@ global temp "$filepath\output\temp"
 *----------------------------------------------------------------*
 
 *------------Question 4.a--------------*
-
-*Estimating TFP of firms in industry 13 as the residuals of an OLS regression of value added on inputs, with fixed effects for country and year
-reg ln_real_VA ln_L ln_real_K i.country_num i.year if sector==13
-predict ln_TFP_OLS_13, residuals 
-
-* Even when you run a regression on a subset, Stata's predict applies to the whole dataset
-replace ln_TFP_OLS_13 = . if sector != 13
-
-*Retrieve TFP from its logartihmic transformation
-gen TFP_OLS_13= exp(ln_TFP_OLS_13)
+use "C:\Users\user\Desktop\EEU\TH\Dataset4.dta", clear 
 
 *Estimating TFP with the Levinsohn-Petrin value added procedure 
-xi: levpet ln_real_VA if sector==13, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+*Sector 13
+xi:levpet ln_real_VA if sector==13, free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 predict TFP_LP_13, omega
-replace TFP_LP_13 = . if sector != 13
+replace TFP_LP_13 = . if sector==29
 *Generate logarithmic transformation
 gen ln_TFP_LP_13= ln(TFP_LP_13)
 
-*Estimating TFP with the Wooldridge procedure
-*Generating dummy variables for country and year 
-capture confirm variable country_num
-if _rc != 0 {
-    encode country, gen(country_num)
-}
-capture drop year_dummy*
-capture drop country_dummy*
-tab year, gen(year_dummy)
-tab country_num, gen(country_dummy)
-
-xi:prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
-predict ln_TFP_WRDG_13, residuals 
-replace ln_TFP_WRDG_13 = . if sector != 13
-gen TFP_WRDG_13= exp(ln_TFP_WRDG_13)
-
-
-*Repeating the same procedure for industry 29
-
-reg ln_real_VA ln_L ln_real_K i.country_num i.year if sector==29
-predict ln_TFP_OLS_29, residuals 
-replace ln_TFP_OLS_29 = . if sector != 29
-gen TFP_OLS_29= exp(ln_TFP_OLS_29)
-
-*Estimating TFP with the Levinsohn-Petrin value added procedure
-xi: levpet ln_real_VA if sector==29, free(ln_L i.country i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+* Sector 29
+xi:levpet ln_real_VA if sector==29, free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
 predict TFP_LP_29, omega
-replace TFP_LP_29 = . if sector != 29
+replace TFP_LP_29 = . if sector==13
 gen ln_TFP_LP_29= ln(TFP_LP_29)
 
 *Estimating TFP with the Wooldridge procedure
-xi:prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy* country_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
+xi:prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+predict ln_TFP_WRDG_13, residuals 
+replace ln_TFP_WRDG_13 = . if sector==29
+*We do not put year dummy because Woolridge automatically accounts for time-varying differences
+gen TFP_WRDG_13= exp(ln_TFP_WRDG_13)
+
+* Sector 29
+xi:prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_29, residuals 
-replace ln_TFP_WRDG_29 = . if sector != 29
+replace ln_TFP_WRDG_29 = . if sector==13
 gen TFP_WRDG_29= exp(ln_TFP_WRDG_29)
 
-*Drop dummy variables 
-capture drop year_dummy*
-capture drop country_dummy*
-
 log using "extremev.log", replace
-sum TFP_OLS_13, d
 sum TFP_LP_13, d
 sum TFP_WRDG_13, d
 
-sum TFP_OLS_29, d
 sum TFP_LP_29, d
 sum TFP_WRDG_29, d
 log close
 
 ***Comment on the presence of "extreme" values in both industries. 
 
-*Clear the TFP estimates from extreme values - Should I drop the observations? 
-sum TFP_OLS_13, d
-replace TFP_OLS_13 = . if !inrange(TFP_OLS_13, r(p1), r(p99))
 
-sum TFP_LP_13, d
-replace TFP_LP_13 = . if !inrange(TFP_LP_13, r(p1), r(p99))
+* CHECK THAT ALSO LOG VALUES ARE DROPPED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-sum TFP_WRDG_13, d
+*Clear the TFP estimates from extreme values 
+
+summarize TFP_LP_13, d
+replace TFP_LP_13 = . if  !inrange(TFP_LP_13, r(p1), r(p99))
+
+summarize TFP_WRDG_13, d
 replace TFP_WRDG_13 = . if !inrange(TFP_WRDG_13, r(p1), r(p99))
 
-sum TFP_OLS_29, d
-replace TFP_OLS_29 = . if !inrange(TFP_OLS_29, r(p1), r(p99))
-
-sum TFP_LP_29, d
+summarize TFP_LP_29, d
 replace TFP_LP_29 = . if !inrange(TFP_LP_29, r(p1), r(p99))
 
-sum TFP_WRDG_29, d
-replace TFP_WRDG_29 = . if !inrange(TFP_WRDG_29, r(p1), r(p99))
+summarize TFP_WRDG_29, d
+replace TFP_WRDG_29 = . if!inrange(TFP_WRDG_29, r(p1), r(p99))
 
 save "cleaned_sample.dta", replace
 
+log using "extremev_cleaned.log", replace
+sum TFP_LP_13, d
+sum TFP_WRDG_13, d
+
+sum TFP_LP_29, d
+sum TFP_WRDG_29, d
+log close 
+
 *Plot the kdensity of the TFP distribution and the kdensity of the logarithmic transformation of TFP in each industry.
 
-kdensity TFP_OLS_13
-save "$output\TFP_OLS_13", replace
+twoway (kdensity TFP_WRDG_13, lcolor(sienna)) || (kdensity TFP_LP_13, lcolor(blue)), title("TFP Density Industry 13") legend(label(1 "WRDG") label(2 "LP"))
+graph export $output/TFP_13.png, replace
 
-kdensity TFP_LP_13
-save "$output\TFP_LP_13", replace
+twoway (kdensity ln_TFP_WRDG_13, lcolor(sienna)) || (kdensity ln_TFP_LP_13, lcolor(blue)), title("Log TFP vDensity Industry 13") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/lnTFP_13.png, replace
 
-kdensity TFP_WRDG_13
-save "$output\TFP_WRDG_13", replace
+twoway (kdensity TFP_WRDG_29, lcolor(sienna)) || (kdensity TFP_LP_29, lcolor(blue)), title("TFP Density Industry 29") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/TFP_29.png, replace
 
-tw kdensity ln_TFP_OLS_13 || kdensity ln_TFP_LP_13 || kdensity ln_TFP_WRDG_13
-save "$output\TFP_13_compared", replace
-
-kdensity TFP_OLS_29
-save "$output\TFP_OLS_29", replace
-
-kdensity TFP_LP_29
-save "$output\TFP_LP_29", replace
-
-kdensity TFP_WRDG_29
-save "$output\TFP_WRDG-29", replace
-
-tw kdensity ln_TFP_OLS_29 || kdensity ln_TFP_LP_29 || kdensity ln_TFP_WRDG_29
-save "$output\TFP_29_compared", replace
+twoway (kdensity ln_TFP_WRDG_29, lcolor(sienna)) || (kdensity ln_TFP_LP_29, lcolor(blue)), title("Log TFP Density Industry 29") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/lnTFP_29.png, replace
 
 *What do you notice? Are there any differences if you rely on the LP or WRDG procedure? Comment.
 
 *------------Question 4.b--------------*
 
-*************************Estimate TFP for Spain********************************
-reg ln_real_VA ln_L ln_real_K i.year if country == "Spain"
-predict ln_TFP_OLS_SP, residuals 
-replace ln_TFP_OLS_SP = . if country != "Spain"
-gen TFP_OLS_SP= exp(ln_TFP_OLS_SP)
+*************************Estimate TFP with LP********************************
+*** Using the original sample not cleaned the results are the same 
+use "C:\Users\user\Desktop\EEU\cleaned_sample.dta", clear
 
-xi: levpet ln_real_VA if country == "Spain", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
-predict TFP_LP_SP, omega
+*Estimating TFP distribution for Spain
+xi:levpet ln_real_VA if country == "Spain", free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+predict TFP_LP_SP if e(sample), omega
 replace TFP_LP_SP = . if country != "Spain"
 gen ln_TFP_LP_SP= ln(TFP_LP_SP)
+sum TFP_LP_SP, d
 
-*Generating dummy variables for year 
-capture drop year_dummy*
-tab year, gen(year_dummy)
-
-xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*)  method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
-predict ln_TFP_WRDG_SP, residuals 
-replace ln_TFP_WRDG_SP = . if country != "Spain"
-gen TFP_WRDG_SP= exp(ln_TFP_WRDG_SP)
-
-*************************Estimate TFP for Italy********************************
-reg ln_real_VA ln_L ln_real_K i.year if country == "Italy"
-predict ln_TFP_OLS_IT, residuals 
-replace ln_TFP_OLS_IT = . if country != "Italy"
-gen TFP_OLS_IT = exp(ln_TFP_OLS_IT)
-
-xi: levpet ln_real_VA if country == "Italy", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
-predict TFP_LP_IT, omega
+*Estimating TFP distribution for Italy
+xi:levpet ln_real_VA if country == "Italy", free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+predict TFP_LP_IT if e(sample), omega
 replace TFP_LP_IT = . if country != "Italy"
 gen ln_TFP_LP_IT = ln(TFP_LP_IT)
+sum TFP_LP_IT, d
 
-xi: prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
-predict ln_TFP_WRDG_IT, residuals 
-replace ln_TFP_WRDG_IT = . if country != "Italy"
-gen TFP_WRDG_IT = exp(ln_TFP_WRDG_IT)
-
-*************************Estimate TFP for France********************************
-reg ln_real_VA ln_L ln_real_K i.year if country == "France"
-predict ln_TFP_OLS_FR, residuals 
-replace ln_TFP_OLS_FR = . if country != "France"
-gen TFP_OLS_FR = exp(ln_TFP_OLS_FR)
-
-xi: levpet ln_real_VA if country == "France", free(ln_L i.year) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
-predict TFP_LP_FR, omega
+*Estimating TFP distribution for France
+xi:levpet ln_real_VA if country == "France", free(ln_L i.year i.country) proxy(ln_real_M) capital(ln_real_K) reps(50) level(99)
+predict TFP_LP_FR if e(sample), omega
 replace TFP_LP_FR = . if country != "France"
 gen ln_TFP_LP_FR = ln(TFP_LP_FR)
+sum TFP_LP_FR, d
 
-xi: prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(year_dummy*) method(wrdg) id(id_n) t(year) level(99) reps(50) valueadded 
-predict ln_TFP_WRDG_FR, residuals 
-replace ln_TFP_WRDG_FR = . if country != "France"
+
+*************************Estimate TFP with WRDG********************************
+capture drop country_dummy*
+tab country, gen(country_dummy)
+
+*Estimating TFP distribution for Spain
+xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+predict ln_TFP_WRDG_SP if country == "Spain", residuals 
+gen TFP_WRDG_SP= exp(ln_TFP_WRDG_SP)
+sum TFP_WRDG_SP, d
+
+*Estimating TFP distribution for Italy
+xi:prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+predict ln_TFP_WRDG_IT if country == "Italy", residuals 
+gen TFP_WRDG_IT = exp(ln_TFP_WRDG_IT)
+sum TFP_WRDG_IT, d
+
+*Estimating TFP distribution for France
+xi:prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+predict ln_TFP_WRDG_FR if country == "France", residuals 
 gen TFP_WRDG_FR = exp(ln_TFP_WRDG_FR)
+sum TFP_WRDG_FR, d
 
-*Drop dummy variables 
-capture drop year_dummy*
+
+*Clean outliers 
+summarize TFP_LP_SP, d
+replace TFP_LP_SP = . if  !inrange(TFP_LP_SP, r(p1), r(p99))
+summarize TFP_WRDG_SP, d
+replace TFP_WRDG_SP = . if !inrange(TFP_WRDG_SP, r(p1), r(p99))
+
+summarize TFP_LP_IT, d
+replace TFP_LP_IT = . if  !inrange(TFP_LP_IT, r(p1), r(p99))
+summarize TFP_WRDG_IT, d
+replace TFP_WRDG_IT = . if !inrange(TFP_WRDG_IT, r(p1), r(p99))
+
+summarize TFP_LP_FR, d
+replace TFP_LP_FR = . if  !inrange(TFP_LP_FR, r(p1), r(p99))
+summarize TFP_WRDG_FR, d
+replace TFP_WRDG_FR = . if !inrange(TFP_WRDG_FR, r(p1), r(p99))
 
 *Plot the TFP distribution for each country
-tw kdensity ln_TFP_OLS_SP || kdensity ln_TFP_LP_SP || kdensity ln_TFP_WRDG_SP
-save "$output\TFP_SP_compared", replace
 
-tw kdensity ln_TFP_OLS_IT || kdensity ln_TFP_LP_IT || kdensity ln_TFP_WRDG_IT
-save "$output\TFP_IT_compared", replace
+*Spain
+twoway (kdensity TFP_WRDG_SP, lcolor(sienna)) || (kdensity TFP_LP_SP, lcolor(blue)), title("TFP Density Spain") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/TFP_SP.png, replace
 
-tw kdensity ln_TFP_OLS_FR || kdensity ln_TFP_LP_FR || kdensity ln_TFP_WRDG_FR
-save "$output\TFP_FR_compared", replace
+twoway (kdensity ln_TFP_WRDG_SP, lcolor(sienna)) || (kdensity ln_TFP_WRDG_SP, lcolor(blue)), title("Log TFP Density Spain") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/lnTFP_SP.png, replace
+
+*Italy
+twoway (kdensity TFP_WRDG_IT, lcolor(sienna)) || (kdensity TFP_LP_IT, lcolor(blue)), title("TFP Density Italy") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/TFP_IT.png, replace
+
+twoway (kdensity ln_TFP_WRDG_IT, lcolor(sienna)) || (kdensity ln_TFP_LP_IT, lcolor(blue)), title("Log TFP Density Italy") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/lnTFP_IT.png, replace
+
+*France
+twoway (kdensity TFP_WRDG_FR, lcolor(sienna))||(kdensity TFP_LP_FR, lcolor(blue)), title("TFP Density France") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/TFP_FR.png, replace
+
+twoway (kdensity ln_TFP_WRDG_FR, lcolor(sienna)) || (kdensity ln_TFP_LP_FR, lcolor(blue)), title("Log TFP Density France") legend(label(1 "WRDG") label(2 "LP")) 
+graph export $output/lnTFP_FR.png, replace
 
 *Are there any differences if you rely on the LP or WRDG procedure? Compare and comment.
