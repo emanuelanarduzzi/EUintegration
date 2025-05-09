@@ -98,12 +98,12 @@ save "china_shock_mapped.dta", replace
 use "nuts2_db.dta", clear
 merge 1:1 NUTS_ID using "china_shock_mapped.dta"
 drop if _merge!=3
-drop _merge
+drop if NAME_LATN=="Canarias"
 
 *—— Map average China shock ——————————————————————————————————————*
 spmap ChinaShock using "nuts2_coords.dta", id(id) ///
  fcolor(Blues) clmethod(quantile) clnumber(6) ///
-    title("Average China Shock by Region") legend(on)
+    title("Average China Shock by Region")legend(on pos(6) ring(0) cols(1))
 
 graph export "Average_China_Shock_by_Region.png", replace
 
@@ -138,10 +138,11 @@ use "nuts2_db.dta", clear
 merge 1:1 NUTS_ID using "manuf_share.dta"
 drop if _merge!= 3
 drop _merge
+drop if NAME_LATN=="Canarias"
 
 spmap manuf_share using "nuts2_coords.dta", id(id) ///
     fcolor(Greens) clmethod(quantile) clnumber(6) ///
-    title("Manufacturing Share by Region") legend(on)
+    title("Manufacturing Share by Region") legend(on pos(6) ring(0) cols(1))
 	
 graph export "Manufacturing_Share_by_Region.png", replace
 		  
