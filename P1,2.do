@@ -93,10 +93,6 @@ foreach var in real_sales real_M real_K L real_VA {
         gen ln_`var'=ln(`var')
 		}
 		
-capture drop year_dummy*
-capture drop country_dummy*
-tab year, gen(year_dummy)
-tab country, gen(country_dummy)
 	
 *net install st0060, from("http:\\www.stata-journal.com\software\sj4-2\")
 *ssc install outreg2
@@ -129,7 +125,7 @@ foreach s in 13 29 {
     estimates store OLS_`s'
 
     *WOOLRIDGE REGRESSION
-    xi:prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+    xi:prodest ln_real_VA, free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 
     matrix results[`row', 1] = `s'
     matrix results[`row', 2] = _b[ln_L]
@@ -222,7 +218,7 @@ putexcel C12 = formula(C9-C6), nformat(number_d2)
 * Number of observations for sector 13
 preserve
 keep if sector == 13
-reg ln_real_VA ln_L ln_real_K i.year i.country_num
+reg ln_real_VA ln_L ln_real_K i.year i.country
 local obs13 = e(N)
 putexcel B13 = `obs13'
 restore
@@ -230,7 +226,7 @@ restore
 * Number of observations for sector 29
 preserve
 keep if sector == 29
-reg ln_real_VA ln_L ln_real_K i.year i.country_num
+reg ln_real_VA ln_L ln_real_K i.year i.country
 local obs29 = e(N)
 putexcel C13 = `obs29'
 restore
