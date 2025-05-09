@@ -218,7 +218,7 @@ putexcel C12 = formula(C9-C6), nformat(number_d2)
 * Number of observations for sector 13
 preserve
 keep if sector == 13
-reg ln_real_VA ln_L ln_real_K i.year i.country
+xi: reg ln_real_VA ln_L ln_real_K i.year i.country
 local obs13 = e(N)
 putexcel B13 = `obs13'
 restore
@@ -226,7 +226,7 @@ restore
 * Number of observations for sector 29
 preserve
 keep if sector == 29
-reg ln_real_VA ln_L ln_real_K i.year i.country
+xi: reg ln_real_VA ln_L ln_real_K i.year i.country
 local obs29 = e(N)
 putexcel C13 = `obs29'
 restore
