@@ -556,6 +556,34 @@ keep country nuts2 year ChinaShock
 duplicates drop
 save "$output/ChinaShock_by_region_year.dta", replace
 
+
+*============================*
+* Load China shock data
+*============================*
+use "$output/ChinaShock_by_region_year.dta", clear
+
+*============================*
+* Step 1: Create period variable
+*============================*
+gen period = .
+replace period = 1 if inrange(year, 1994, 2000)
+replace period = 2 if inrange(year, 2001, 2007)
+
+label define period_lbl 1 "1994–2000" 2 "2001–2007" 
+label values period period_lbl
+
+*============================*
+* Step 2: Display percentiles using table (Stata 18 syntax)
+*============================*
+table period, ///
+    statistic(p10 ChinaShock) ///
+    statistic(p25 ChinaShock) ///
+    statistic(p50 ChinaShock) ///
+    statistic(p75 ChinaShock) ///
+    statistic(p90 ChinaShock) /// ///
+
+drop period	
+
 	*—— iii. US imports delta (instrument) ————————————————————————————————————*
 use "$output/weights.dta", clear
 
