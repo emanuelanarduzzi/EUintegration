@@ -47,6 +47,7 @@ use "$data\EEI_TH_2025.dta", clear
 * Keeping only French firms in 2007, sectors 13 and 29, Nord–Pas de Calais (FR30). Note: FR30 retrieved from knoema.com
 preserve
 keep if country == "France" & year == 2007 & inlist(sector, 13, 29) & nuts2 == "FR30"
+drop if K <= 0 | sales <= 0 | L <= 0 | real_VA <= 0 | real_K <= 0 | real_sales <= 0
 collapse (count) id_n (mean) K sales L real_VA real_K real_sales, by(sector)
 
 * Start a new Word document
@@ -59,6 +60,8 @@ restore
 *------------Question 1.b--------------*
 
 keep if country == "France" & year == 2017 & inlist(sector, 13, 29) & nuts2 == "FR30"
+drop if K <= 0 | sales <= 0 | L <= 0 | real_VA <= 0 | real_K <= 0 | real_sales <= 0
+
 collapse (count) id_n (mean) K sales L real_VA real_K real_sales, by(sector)
 
 * Add a paragraph break and second table
