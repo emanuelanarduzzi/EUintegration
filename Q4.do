@@ -21,11 +21,13 @@ global data "$filepath"
 global output "$filepath\output"
 global temp "$filepath\output\temp"
 
+
 *----------------------------------------------------------------*
 **************************---QUESTION 4---************************
 *----------------------------------------------------------------*
 
 *------------Question 4.a--------------*
+
 use "C:\Users\user\Desktop\EEU\TH\Dataset4.dta", clear 
 
 *Estimating TFP with the Levinsohn-Petrin value added procedure 
@@ -43,14 +45,14 @@ replace TFP_LP_29 = . if sector==13
 gen ln_TFP_LP_29= ln(TFP_LP_29)
 
 *Estimating TFP with the Wooldridge procedure
-xi:prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+xi:prodest ln_real_VA if sector==13, free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_13, residuals 
 replace ln_TFP_WRDG_13 = . if sector==29
 *We do not put year dummy because Woolridge automatically accounts for time-varying differences
 gen TFP_WRDG_13= exp(ln_TFP_WRDG_13)
 
 * Sector 29
-xi:prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+xi:prodest ln_real_VA if sector==29, free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_29, residuals 
 replace ln_TFP_WRDG_29 = . if sector==13
 gen TFP_WRDG_29= exp(ln_TFP_WRDG_29)
@@ -64,9 +66,6 @@ sum TFP_WRDG_29, d
 log close
 
 ***Comment on the presence of "extreme" values in both industries. 
-
-
-* CHECK THAT ALSO LOG VALUES ARE DROPPED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *Clear the TFP estimates from extreme values 
 
@@ -97,7 +96,7 @@ log close
 twoway (kdensity TFP_WRDG_13, lcolor(sienna)) || (kdensity TFP_LP_13, lcolor(blue)), title("TFP Density Industry 13") legend(label(1 "WRDG") label(2 "LP"))
 graph export $output/TFP_13.png, replace
 
-twoway (kdensity ln_TFP_WRDG_13, lcolor(sienna)) || (kdensity ln_TFP_LP_13, lcolor(blue)), title("Log TFP vDensity Industry 13") legend(label(1 "WRDG") label(2 "LP")) 
+twoway (kdensity ln_TFP_WRDG_13, lcolor(sienna)) || (kdensity ln_TFP_LP_13, lcolor(blue)), title("Log TFP Density Industry 13") legend(label(1 "WRDG") label(2 "LP")) 
 graph export $output/lnTFP_13.png, replace
 
 twoway (kdensity TFP_WRDG_29, lcolor(sienna)) || (kdensity TFP_LP_29, lcolor(blue)), title("TFP Density Industry 29") legend(label(1 "WRDG") label(2 "LP")) 
@@ -141,19 +140,19 @@ capture drop country_dummy*
 tab country, gen(country_dummy)
 
 *Estimating TFP distribution for Spain
-xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+xi:prodest ln_real_VA if country == "Spain", free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_SP if country == "Spain", residuals 
 gen TFP_WRDG_SP= exp(ln_TFP_WRDG_SP)
 sum TFP_WRDG_SP, d
 
 *Estimating TFP distribution for Italy
-xi:prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+xi:prodest ln_real_VA if country == "Italy", free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_IT if country == "Italy", residuals 
 gen TFP_WRDG_IT = exp(ln_TFP_WRDG_IT)
 sum TFP_WRDG_IT, d
 
 *Estimating TFP distribution for France
-xi:prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) control(country_dummy*)  method(wrdg) id(id_n) t(year) valueadded 
+xi:prodest ln_real_VA if country == "France", free(ln_L) state(ln_real_K) proxy(ln_real_M) method(wrdg) id(id_n) t(year) valueadded 
 predict ln_TFP_WRDG_FR if country == "France", residuals 
 gen TFP_WRDG_FR = exp(ln_TFP_WRDG_FR)
 sum TFP_WRDG_FR, d
@@ -199,8 +198,10 @@ twoway (kdensity ln_TFP_WRDG_FR, lcolor(sienna)) || (kdensity ln_TFP_LP_FR, lcol
 graph export $output/lnTFP_FR.png, replace
 
 *Are there any differences if you rely on the LP or WRDG procedure? Compare and comment.
+
 /*************************************************************************************
-Problem IV.c)
+
+*------------Question 4.c--------------*
 
 Focus now on the TFP distributions of industry 13 in France and Spain. Do you find changes in these two TFP distributions in 2006 vs 2015? Did you expect these results? Compare the results obtained with WRDG and LP procedure and comment.
 *************************************************************************************/
@@ -231,7 +232,8 @@ graph combine FR_lp FR_WRDG, col(2)
 graph export "$output/TFP_FR.png", replace
 
 /*************************************************************************************
-Problem IV.d)
+
+*------------Question 4.d--------------*
 
 Look at changes in skewness in the same time window (again, focus on industry 13 only in these two countries). What happens? Relate this result to what you have found at point c.
 *************************************************************************************/
@@ -239,8 +241,8 @@ Look at changes in skewness in the same time window (again, focus on industry 13
 
 
 /*************************************************************************************
-Problem IV.e)
 
+*------------Question 4.e--------------*
 Do you find the shifts to be homogenous throughout the distribution? Once you have defined a specific parametrical distribution for the TFP, is there a way through which you can statistically measure the changes in the TFP distribution in each industry over time (2006 vs 2015)?
 *************************************************************************************/
  
@@ -289,4 +291,6 @@ In sector 29, the estimated OLS coefficient is 1.253 in 2006 and 1.137 in 2015, 
 If we look at the country level, both France and Italy saw a reduction in the estimated k from 2006 to 2015, from, respectively, 1.472 and 1.198 in 2006 to, respectively, 1.198 and 1.006 in 2015. These two countries have thus seen an increase in the number of productive firms and a decrease in the one of unproductive firms in this time frame.
 Spain has instead seen a decrease in dispersion in its TFP distribution in this sector, with the estimated k going from 1.166 to 1.240 from 2006 to 2015.  
 */
+
+
 
