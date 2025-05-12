@@ -40,34 +40,59 @@ global temp "$filepath\output\temp"
 *----------------------------------------------------------------*
 
 
-*------------Question 1.a--------------*
+*------------Question 1.a&b --------------*
 
 use "$data\EEI_TH_2025.dta", clear
 
 * Keeping only French firms in 2007, sectors 13 and 29, Nord–Pas de Calais (FR30). Note: FR30 retrieved from knoema.com
-preserve
+
+use "$data\EEI_TH_2025.dta", clear
+
+* Filter dataset
 keep if country == "France" & year == 2007 & inlist(sector, 13, 29) & nuts2 == "FR30"
-collapse (count) id_n (mean) K sales L real_VA real_K real_sales, by(sector)
+drop if missing(real_K, real_M, real_sales, real_VA, L, W)
 
-* Start a new Word document
-putdocx begin
-putdocx paragraph
-putdocx text ("Descriptive Statistics of Firms in Textiles (Sector 13) and Motor Vehicles (Sector 29) in Nord–Pas de Calais (FR30), 2007"), bold linebreak
-putdocx table table2007 = data(sector id_n K sales L real_VA real_K real_sales), varnames
-restore
+* Drop zero or negative values for all relevant vars
+foreach var in real_K real_M real_sales real_VA L W {
+    drop if `var' <= 0
+}
 
-*------------Question 1.b--------------*
+* Split data by sector
+gen sector_name = cond(sector == 13, "Textile", "MotorVehicles")
 
+* Save sector-specific results with estpost
+tempname Textile MotorVehicles
+
+estpost tabstat real_K real_M real_sales real_VA L W if sector_name == "Textile", stats(min p25 p50 p75 max mean) columns(statistics)
+esttab using Textile.html, replace title("Textile Sector – 2007 Summary Statistics (FR30)") cells("min p25 p50 p75 max mean") nodepvar
+
+estpost tabstat real_K real_M real_sales real_VA L W if sector_name == "MotorVehicles", stats(min p25 p50 p75 max mean) columns(statistics)
+esttab using MotorVehicles.html, replace title("Motor Vehicles Sector – 2007 Summary Statistics (FR30)") cells("min p25 p50 p75 max mean") nodepvar
+
+use "$data\EEI_TH_2025.dta", clear
+
+* Step 1: Filter for 2017, sectors 13 and 29 in FR30
 keep if country == "France" & year == 2017 & inlist(sector, 13, 29) & nuts2 == "FR30"
-collapse (count) id_n (mean) K sales L real_VA real_K real_sales, by(sector)
+drop if missing(real_K, real_M, real_sales, real_VA, L, W)
 
-* Add a paragraph break and second table
-putdocx paragraph
-putdocx text ("Descriptive Statistics of Firms in Textiles (Sector 13) and Motor Vehicles (Sector 29) in Nord–Pas de Calais (FR30), 2017"), bold linebreak
-putdocx table table2017 = data(sector id_n K sales L real_VA real_K real_sales), varnames
+* Step 2: Drop zero or negative values for key variables
+foreach var in real_K real_M real_sales real_VA L W {
+    drop if `var' <= 0
+}
 
-* Save the final document
-putdocx save "$output\descriptive_table_sector13_29_FR30.docx", replace
+* Step 3: Label sector
+gen sector_name = cond(sector == 13, "Textile", "MotorVehicles")
+
+* Step 4: Run estpost + esttab for each sector
+
+* Textile sector
+estpost tabstat real_K real_M real_sales real_VA L W if sector_name == "Textile", stats(min p25 p50 p75 max mean) columns(statistics)
+esttab using Textile_2017.html, replace title("Textile Sector – 2017 Summary Statistics (FR30)") cells("min p25 p50 p75 max mean") nodepvar
+
+* Motor Vehicles sector
+estpost tabstat real_K real_M real_sales real_VA L W if sector_name == "MotorVehicles", stats(min p25 p50 p75 max mean) columns(statistics)
+esttab using MotorVehicles_2017.html, replace title("Motor Vehicles Sector – 2017 Summary Statistics (FR30)") cells("min p25 p50 p75 max mean") nodepvar
+
 
 *--------------------------------------*
 *----------------------------------------------------------------*
