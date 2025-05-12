@@ -1,7 +1,7 @@
 *******************************
 *------- Assignment -------*
 *---------- GROUP n ----------*
-* nome cognome - student id
+* Claudia Ambrosino - 3179968
 * nome cognome - student id
 * Jovana Mrdalj - 3280610
 * Emanuela Narduzzi - 3173310
@@ -821,6 +821,7 @@ encode region, gen(region_id)
 
 log using "Regressions7.log", replace
 reg sbsrnen ChinaShock gndr agea i.edulvlb i.NUTS1 [pw=pspwght], vce(cluster region_id)
+log close
 
 *ssc install estout
 *esttab using Q7b.tex, replace tex label se title("Regression of green attitude score on region-level China shock") keep(avg_china_shock)  
