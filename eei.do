@@ -2,9 +2,9 @@
 *------- Assignment -------*
 *---------- GROUP n ----------*
 * Claudia Ambrosino - 3179968
-* nome cognome - student id
 * Jovana Mrdalj - 3280610
 * Emanuela Narduzzi - 3173310
+* Alessandro Storto - 3213298
 *******************************
 clear all
 set more off
