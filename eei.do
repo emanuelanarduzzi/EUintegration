@@ -485,7 +485,27 @@ graph export "$output/TFP_FR.png", replace
 
 Look at changes in skewness in the same time window (again, focus on industry 13 only in these two countries). What happens? Relate this result to what you have found at point c.
 *************************************************************************************/
+log using "descriptive.log", replace
 
+sum TFP_LP_13 if country == "France" & year == 2006, d
+
+sum TFP_LP_13 if country == "France" & year == 2015, d
+
+sum TFP_LP_13 if country == "Spain" & year == 2006, d
+
+sum TFP_LP_13 if country == "Spain" & year == 2015, d
+
+*Wooldridge
+
+sum TFP_WRDG_13 if country == "France" & year == 2006, d
+
+sum TFP_WRDG_13 if country == "France" & year == 2015, d
+
+sum TFP_WRDG_13 if country == "Spain" & year == 2006, d
+
+sum TFP_WRDG_13 if country == "Spain" & year == 2015, d
+
+log close
 
 
 /*************************************************************************************
@@ -493,29 +513,25 @@ Look at changes in skewness in the same time window (again, focus on industry 13
 *------------Question 4.e--------------*
 Do you find the shifts to be homogenous throughout the distribution? Once you have defined a specific parametrical distribution for the TFP, is there a way through which you can statistically measure the changes in the TFP distribution in each industry over time (2006 vs 2015)?
 
- * First, let's check France
 sort sector year
-by sector year: cumul TFP_LP_FR, generate(cum_TFP_LP_FR)
-gen rhs_LP_FR=log(1- cum_TFP_LP_FR)
+by sector year: cumul TFP_LP, generate(cum_TFP_LP)
+gen rhs_LP=log(1- cum_TFP_LP)
 
 foreach s in 13 29{
-qui reg rhs_LP_FR ln_TFP_LP_FR if sector==`s' & year==2006
-outreg2 using Pareto_FR.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006")
-qui reg rhs_LP_FR ln_TFP_LP_FR if sector==`s' & year==2015
-outreg2 using Pareto_FR.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2006
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2015
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2006 & country=="France"
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006 - France")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2015 & country=="France"
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015 - France")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2006 & country=="Spain"
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006 - Spain")
+qui reg rhs_LP ln_TFP_LP if sector==`s' & year==2015 & country=="Spain"
+outreg2 using Pareto_up.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015 - Spain")
 }
 
-* Now let's check Spain
-sort sector year
-by sector year: cumul TFP_LP_SP, generate(cum_TFP_LP_SP)
-gen rhs_LP_SP=log(1- cum_TFP_LP_SP)
-
-foreach s in 13 29{
-qui reg rhs_LP_SP ln_TFP_LP_SP if sector==`s' & year==2006
-outreg2 using Pareto_SP.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2006")
-qui reg rhs_LP_SP ln_TFP_LP_SP if sector==`s' & year==2015
-outreg2 using Pareto_SP.xls, append title("Pareto Distribution") ctitle("Sector `s' - 2015")
-}
 
 *----------------------------------------------------------------*
 **************************---QUESTION 5---************************
