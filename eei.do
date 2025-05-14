@@ -747,7 +747,7 @@ save "$output/P6_merged.dta", replace
 */
 encode nuts2, gen(nuts2_num)
 
-xi: regress tfp_pc ChinaShock lag_pop lag_educ lag_gdp i.cou, robust cluster(nace2_2_group)
+xi: regress tfp_pc ChinaShock lag_pop lag_educ lag_gdp i.cou, robust cluster(nuts2)
 eststo ols1
 
 
@@ -755,7 +755,7 @@ eststo ols1
 
 /*To deal with endogeneity issues, use the instrumental variable you have built before, based on changes in Chinese imports to the USA, and run again the regressions as in a). Do you see any changes in the coefficient?
 */
-xi: ivregress 2sls tfp_pc lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou, robust cluster(nace2_2_group)
+xi: ivregress 2sls tfp_pc lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou, robust cluster(nuts2)
 eststo iv1
 
 
@@ -763,18 +763,18 @@ eststo iv1
 
 /*Now, regress (both OLS and IV) the post-crisis average of wage against the region-level China shock previously constructed, controlling for the 3-year lags of population, education and GDP. Comment on the estimated coefficient on the China shock.
 */
-xi: regress wages_pc ChinaShock lag_pop lag_educ lag_gdp i.cou, robust cluster(nace2_2_group)
+xi: regress wages_pc ChinaShock lag_pop lag_educ lag_gdp i.cou, robust cluster(nuts2)
 eststo ols2
-xi: ivregress 2sls wages_pc lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou, robust cluster(nace2_2_group)
+xi: ivregress 2sls wages_pc lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou, robust cluster(nuts2)
 eststo iv2
 
 
 /*Lastly, what happens if you regress (both OLS and IV) the post-crisis average of
 wage against the region-level China shock previously constructed. Control for the average TFP during the post crisis years, an interaction term between average of TFP and China shock and for the 3-year lags of population, education and GDP? Comment.
 */
-xi: regress wages_pc ChinaShock tfp_pc c.tfp_pc#c.ChinaShock lag_pop lag_educ lag_gdp i.cou i.nace2_2_group, robust
+xi: regress wages_pc ChinaShock tfp_pc c.tfp_pc#c.ChinaShock lag_pop lag_educ lag_gdp i.cou, robust cluster(nuts2)
 eststo ols3
-xi: ivregress 2sls wages_pc tfp_pc c.tfp_pc#c.ChinaShock lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou i.nace2_2_group, robust
+xi: ivregress 2sls wages_pc tfp_pc c.tfp_pc#c.ChinaShock lag_pop lag_educ lag_gdp (ChinaShock = USShock) i.cou, robust cluster(nuts2)
 eststo iv3
 
 label variable ChinaShock "China Trade Shock"
